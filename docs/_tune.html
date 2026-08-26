@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Toggle tuner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="fonts/plex.local.css" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden}
+  body{margin:0;background:#16232e;color:#cfe3ea;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+       min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:30px;
+       padding:34px 16px 220px;text-align:center}
+  h1{font:600 14px 'IBM Plex Mono',monospace;color:#8fa3ad;letter-spacing:1px;margin:0;line-height:1.6;max-width:560px}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .cap{font:600 12px 'IBM Plex Mono',monospace;color:#5c7382;letter-spacing:1px}
+
+  /* real-size toggle — pixel-identical to the app */
+  .toggle{position:relative;display:flex;flex-shrink:0;border:2px solid #4d6272;border-radius:9px;background:#0d161d;padding:3px}
+  .thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);background:#0e7490;border-radius:6px}
+  .name{position:relative;width:92px;display:flex;align-items:center;justify-content:center;
+        font:700 12px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#fff}
+  .name.b{color:#5c7382}
+
+  /* magnified clone with a center line */
+  .bigwrap{width:100%;display:flex;justify-content:center;overflow:hidden}
+  .big{transform:scale(4);transform-origin:top center;margin:60px 0}
+  .cl{position:absolute;left:0;right:0;top:50%;height:1px;background:#ff3b30;z-index:9}
+
+  .controls{position:fixed;bottom:0;left:0;right:0;background:#0d161d;border-top:1px solid #33465a;
+            padding:16px 18px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:14px}
+  .val{font:700 34px 'IBM Plex Mono',monospace;color:#0e7490}
+  input[type=range]{width:min(92vw,540px);height:34px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  button{font:700 15px 'IBM Plex Mono',monospace;background:#16232e;color:#cfe3ea;border:1px solid #4d6272;
+         border-radius:8px;padding:12px 14px;min-width:64px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  button:active{background:#0e7490}
+  .hint{font:500 12px 'IBM Plex Mono',monospace;color:#8fa3ad;line-height:1.5;max-width:540px}
+</style>
+</head>
+<body>
+  <h1>Drag the slider until GAGE / KAYLENE look vertically centered to you, then tell me the number shown.</h1>
+
+  <div class="stage">
+    <div class="cap">ACTUAL SIZE — how it really looks in the app</div>
+    <div class="toggle">
+      <div class="thumb"></div>
+      <div class="name" id="a1">GAGE</div>
+      <div class="name b" id="b1">KAYLENE</div>
+    </div>
+  </div>
+
+  <div class="stage" style="width:100%">
+    <div class="cap">4× MAGNIFIED — red line marks the exact center</div>
+    <div class="bigwrap">
+      <div class="big">
+        <div class="toggle">
+          <div class="thumb"></div>
+          <div class="cl"></div>
+          <div class="name" id="a2">GAGE</div>
+          <div class="name b" id="b2">KAYLENE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="val" id="val">0.00 px</div>
+    <input type="range" id="slider" min="-2" max="2" step="0.05" value="0">
+    <div class="btns">
+      <button ontouchstart="" onclick="bump(-0.25)">−0.25</button>
+      <button ontouchstart="" onclick="bump(-0.05)">−0.05</button>
+      <button ontouchstart="" onclick="reset()">0</button>
+      <button ontouchstart="" onclick="bump(0.05)">+0.05</button>
+      <button ontouchstart="" onclick="bump(0.25)">+0.25</button>
+    </div>
+    <div class="hint">+ nudges the text DOWN, − nudges it UP. When it looks centered, read the big number and send it to me.</div>
+  </div>
+
+<script>
+  var s = document.getElementById('slider');
+  var val = document.getElementById('val');
+  var names = ['a1','b1','a2','b2'].map(function(id){return document.getElementById(id);});
+  function apply(v){
+    v = Math.round(v*100)/100;
+    if (v > 2) v = 2; if (v < -2) v = -2;
+    s.value = v;
+    val.textContent = (v>0?'+':'') + v.toFixed(2) + ' px';
+    names.forEach(function(n){ n.style.transform = 'translateY(' + v + 'px)'; });
+  }
+  function bump(d){ apply(parseFloat(s.value) + d); }
+  function reset(){ apply(0); }
+  s.addEventListener('input', function(){ apply(parseFloat(s.value)); });
+  apply(0);
+</script>
+</body>
+</html>
