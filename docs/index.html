@@ -305,12 +305,15 @@ video{display:block}
       <sc-if value="{{camErr}}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#5c7382">
           <div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px">CAMERA UNAVAILABLE</div>
-          <div style="font:500 11px 'IBM Plex Mono',monospace">SIMULATED READ IN PROGRESS</div>
+          <div style="font:500 11px 'IBM Plex Mono',monospace">TAP A FIELD BELOW TO ENTER MANUALLY</div>
         </div>
       </sc-if>
       <div style="position:absolute;left:9%;right:9%;top:16%;bottom:16%;border:3px solid {{retColor}};transition:border-color .3s ease;pointer-events:none"></div>
-      <div style="position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;pointer-events:none">
-        <div style="background:rgba(8,14,19,.84);color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:13px 18px;max-width:88%;text-align:center">{{capGuide}}</div>
+      <div style="position:absolute;left:0;right:0;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:12px">
+        <div style="background:rgba(8,14,19,.84);color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:11px 16px;max-width:88%;text-align:center;pointer-events:none">{{capGuide}}</div>
+        <sc-if value="{{showScan}}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{onScanNow}}" disabled="{{scanBusy}}" style="{{scanBtnStyle}}">{{scanLabel}}</button>
+        </sc-if>
       </div>
     </div>
     <div style="flex:1;min-width:0;overflow-y:auto;background:#eef1f2;display:flex;flex-direction:column">
@@ -404,7 +407,7 @@ video{display:block}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:600},&quot;showBrand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;rosterOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alphabetical&quot;,&quot;days on hand&quot;,&quot;class&quot;],&quot;default&quot;:&quot;alphabetical&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 class Component extends DCLogic {
-  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, camOn: false, camErr: false, capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
+  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, camOn: false, camErr: false, camScanning: false, capEdit: null, capMsg: 'POINT AT THE LABEL AND TAP SCAN', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
   vidRef = React.createRef();
   timers = [];
 
@@ -492,62 +495,142 @@ class Component extends DCLogic {
   go(view, extra) { if (this.state.view === 'capture' && view !== 'capture') this.stopCam(); this.setState(Object.assign({ view, err: '', delArm: false }, extra || {})); }
 
   capDefs() {
-    const t = this.tmid();
     return [
-      ['drug', 'DRUG (GENERIC + BRAND)', 1, 'carvedilol (Coreg)'],
-      ['strength', 'STRENGTH', 1, '25 mg', '2.5 mg'],
-      ['sig', 'SIG — AS WRITTEN', 1, '1 tab PO BID with food'],
-      ['qty', 'QTY DISPENSED', 1, '180'],
-      ['filled', 'FILL DATE', 1, this.iso(new Date(+t - 864e5 * 10))],
-      ['refills', 'REFILLS REMAINING', 1, '3'],
-      ['rx', 'RX NUMBER', 0, '2718304'],
-      ['prescriber', 'PRESCRIBER', 0, null],
-      ['pharmacy', 'PHARMACY', 0, 'VA CMOP (mail)'],
-      ['discard', 'DISCARD DATE', 0, null]
+      ['drug', 'DRUG (GENERIC + BRAND)', 1],
+      ['strength', 'STRENGTH', 1],
+      ['sig', 'SIG — AS WRITTEN', 1],
+      ['qty', 'QTY DISPENSED', 1],
+      ['filled', 'FILL DATE', 1],
+      ['refills', 'REFILLS REMAINING', 1],
+      ['rx', 'RX NUMBER', 0],
+      ['prescriber', 'PRESCRIBER', 0],
+      ['pharmacy', 'PHARMACY', 0],
+      ['discard', 'DISCARD DATE', 0]
     ];
   }
 
   initCam() {
-    if (this._camTried) { this.startSim(); return; }
-    this._camTried = true;
-    const fail = () => { this.setState({ camErr: true }); this.startSim(); };
+    if (this._camStream) return;
+    const fail = () => { this.setState({ camErr: true }); };
     try {
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(stm => {
         this._camStream = stm;
-        this.setState({ camOn: true }, () => { if (this.vidRef.current) this.vidRef.current.srcObject = stm; });
-        this.startSim();
+        this.setState({ camOn: true, camErr: false }, () => { if (this.vidRef.current) this.vidRef.current.srcObject = stm; });
       }).catch(fail);
     } catch (e) { fail(); }
   }
 
-  startSim() {
-    this.timers.forEach(clearTimeout); this.timers = [];
-    const cap = this.state.data.capture || {};
-    const msgs = { drug: 'HOLD STEADY — READING DRUG NAME', strength: 'READING STRENGTH', sig: 'READING SIG', qty: 'READING FILL DATA', filled: 'READING FILL DATA', refills: 'READING FILL DATA', rx: 'READING RX INFO', pharmacy: 'READING RX INFO' };
-    let t = 800;
-    for (const [k, label, req, val, alt] of this.capDefs()) {
-      if (!val) continue;
-      const f = cap[k];
-      if (f && f.state && f.state !== 'empty') continue;
-      this.timers.push(setTimeout(() => { this.setCap(k, { state: 'extracting' }); this.setState({ capMsg: msgs[k] || 'READING LABEL' }); }, t)); t += 950;
-      this.timers.push(setTimeout(() => { this.setCap(k, alt ? { state: 'conflict', value: val, alt } : { state: 'captured', value: val }); }, t)); t += 380;
+  ensureOcr() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (!this._ocrLoad) {
+      this._ocrLoad = new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = new URL('vendor/tesseract/tesseract.min.js', document.baseURI).href;
+        s.onload = () => res(window.Tesseract);
+        s.onerror = () => rej(new Error('tesseract failed to load'));
+        document.head.appendChild(s);
+      });
     }
-    this.timers.push(setTimeout(() => { this.setState({ capMsg: 'ENTER REMAINING FIELDS MANUALLY — TAP A ROW' }); }, t));
+    return this._ocrLoad;
+  }
+
+  // Real on-device OCR: grab the current camera frame, read it with Tesseract,
+  // and fill the capture fields from parsed label text. No network, no fake data.
+  async scanNow() {
+    if (this.state.camScanning) return;
+    const vid = this.vidRef.current;
+    if (!vid || !vid.videoWidth) { this.setState({ capMsg: 'CAMERA NOT READY — WAIT A MOMENT' }); return; }
+    this.setState({ camScanning: true, capMsg: 'LOADING OCR ENGINE…' });
+    try {
+      const vw = vid.videoWidth, vh = vid.videoHeight;
+      const scale = Math.min(1, 1500 / vw);
+      const cw = Math.round(vw * scale), ch = Math.round(vh * scale);
+      const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      const ctx = cv.getContext('2d'); ctx.drawImage(vid, 0, 0, cw, ch);
+      // grayscale + light threshold to sharpen printed text
+      const img = ctx.getImageData(0, 0, cw, ch), px = img.data;
+      for (let i = 0; i < px.length; i += 4) { const g = 0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]; const v = g > 145 ? 255 : (g < 95 ? 0 : g); px[i] = px[i + 1] = px[i + 2] = v; }
+      ctx.putImageData(img, 0, 0);
+      const T = await this.ensureOcr();
+      const U = u => new URL(u, document.baseURI).href;
+      if (!this._ocrWorker) {
+        this.setState({ capMsg: 'STARTING OCR ENGINE (FIRST SCAN IS SLOWER)…' });
+        this._ocrWorker = await T.createWorker('eng', 1, {
+          workerPath: U('vendor/tesseract/worker.min.js'),
+          corePath: U('vendor/tesseract/tesseract-core-lstm.wasm.js'),
+          langPath: U('vendor/tesseract/lang'),
+          logger: m => { if (m && m.status === 'recognizing text') this.setState({ capMsg: 'READING LABEL… ' + Math.round((m.progress || 0) * 100) + '%' }); }
+        });
+      }
+      this.setState({ capMsg: 'READING LABEL…' });
+      const out = await this._ocrWorker.recognize(cv);
+      this.applyOcr((out && out.data && out.data.text) || '');
+    } catch (e) {
+      console.warn('[ocr] failed', e);
+      this.setState({ capMsg: 'OCR UNAVAILABLE — TAP A ROW TO ENTER FIELDS MANUALLY' });
+    } finally {
+      this.setState({ camScanning: false });
+    }
+  }
+
+  matchKnownDrug(U) {
+    for (const m of (this.state.data.meds || [])) {
+      const g = (m.generic || '').toUpperCase().split(/[\s\-]/)[0];
+      const b = (m.brand || '').toUpperCase();
+      if (g && g.length >= 4 && U.indexOf(g) !== -1) return m;
+      if (b && b.length >= 4 && U.indexOf(b) !== -1) return m;
+    }
+    return null;
+  }
+
+  applyOcr(text) {
+    const raw = text || '', U = raw.toUpperCase();
+    const lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+    const set = (k, v, alt) => { if (v != null && String(v).trim()) this.setCap(k, alt ? { state: 'conflict', value: String(v), alt: String(alt) } : { state: 'captured', value: String(v) }); };
+    const toIso = (mo, da, yr) => { yr = String(yr).length === 2 ? '20' + yr : String(yr); return yr + '-' + String(+mo).padStart(2, '0') + '-' + String(+da).padStart(2, '0'); };
+
+    const sm = U.match(/(\d+(?:\.\d+)?(?:\s*-\s*\d+(?:\.\d+)?)?)\s*(MG|MCG|MEQ|ML|UNITS?|%)\b/);
+    if (sm) set('strength', sm[1].replace(/\s+/g, '') + ' ' + sm[2].toLowerCase());
+
+    const qm = U.match(/QTY(?:\s*DISP(?:ENSED)?)?[:#\s]*(\d{1,4})/) || U.match(/QUANTITY[:#\s]*(\d{1,4})/);
+    if (qm) set('qty', qm[1]);
+
+    const rm = U.match(/RX\s*(?:NO?[.:]?|#)?\s*[:#]?\s*(\d{5,})/);
+    if (rm) set('rx', rm[1]);
+
+    const fm = U.match(/REFILLS?\s*(?:REMAINING)?\s*[:#]?\s*(\d{1,2})\b/) || U.match(/\b(\d{1,2})\s*REFILLS?\b/);
+    if (fm) set('refills', fm[1]);
+
+    const disc = U.match(/DISCARD[^0-9]{0,12}(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    if (disc) set('discard', toIso(disc[1], disc[2], disc[3]));
+
+    const fill = U.match(/(?:FILLED|FILL DATE|DATE FILLED|DISPENSED)[^0-9]{0,10}(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    if (fill) set('filled', toIso(fill[1], fill[2], fill[3]));
+    else { const anyd = raw.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/); if (anyd && (!disc || anyd[0] !== disc[0])) set('filled', toIso(anyd[1], anyd[2], anyd[3])); }
+
+    if (/\bCMOP\b|VETERANS|VA\s+MAIL/.test(U)) set('pharmacy', 'VA CMOP (mail)');
+
+    const hit = this.matchKnownDrug(U);
+    if (hit) set('drug', hit.brand ? hit.generic + ' (' + hit.brand + ')' : hit.generic);
+    else { const cand = lines.find(l => /^[A-Za-z][A-Za-z0-9 \-\/]{3,28}$/.test(l) && !/PHARMACY|PATIENT|DIRECTION|TAKE|VETERAN|REFILL|QTY|DISCARD/i.test(l)); if (cand) set('drug', cand.toLowerCase()); }
+
+    const sig = lines.find(l => /\b(TAKE|BY MOUTH|TWICE|ONCE|DAILY|BID|TID|QID|EVERY)\b/i.test(l) && !/\d\s*(MG|MCG|MEQ|ML)\b/i.test(l) && l.length <= 80);
+    if (sig) set('sig', sig);
+
+    this.setState({ capMsg: 'REVIEW FIELDS — TAP ANY ROW TO EDIT, THEN SAVE →' });
   }
 
   stopCam() {
     if (this._camStream) { this._camStream.getTracks().forEach(x => x.stop()); this._camStream = null; }
-    this._camTried = false;
-    this.timers.forEach(clearTimeout); this.timers = [];
-    if (this.state.camOn || this.state.camErr) this.setState({ camOn: false, camErr: false, capEdit: null });
+    if (this._ocrWorker) { try { this._ocrWorker.terminate(); } catch (e) {} this._ocrWorker = null; }
+    if (this.state.camOn || this.state.camErr || this.state.camScanning) this.setState({ camOn: false, camErr: false, camScanning: false, capEdit: null });
   }
 
   setCap(k, obj) { const d = this.state.data; d.capture = Object.assign({}, d.capture, { [k]: obj }); this.persist(d); }
 
   capReset() {
     const d = this.state.data; d.capture = {}; this.persist(d);
-    this.setState({ capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME' });
-    this.startSim();
+    this.setState({ capEdit: null, capMsg: 'POINT AT THE LABEL AND TAP SCAN' });
   }
 
   reviewSave() {
@@ -810,6 +893,9 @@ class Component extends DCLogic {
       goCapture: () => { this.go('capture'); this.initCam(); },
       capDir: st.wide ? 'row' : 'column', capFeedFlex: st.wide ? '0 0 58%' : '0 0 40%',
       camErr: st.camErr, vidRef: this.vidRef, retColor, capGuide,
+      onScanNow: () => this.scanNow(), scanBusy: st.camScanning, showScan: !st.camErr,
+      scanLabel: st.camScanning ? 'SCANNING…' : 'SCAN LABEL',
+      scanBtnStyle: "border:none;border-radius:10px;min-height:56px;padding:0 34px;font:700 15px 'IBM Plex Mono',monospace;letter-spacing:2px;cursor:pointer;" + (st.camScanning ? 'background:#5c7382;color:#cfe3ea' : 'background:#166534;color:#fff'),
       capCountLine: capCount + ' OF ' + capDs.length + ' CAPTURED',
       reqLine: 'REQUIRED ' + reqGot + '/' + reqDs.length,
       onCapReset: () => this.capReset(), onReview: () => this.reviewSave(),
