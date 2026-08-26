@@ -404,7 +404,7 @@ video{display:block}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:600},&quot;showBrand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;rosterOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alphabetical&quot;,&quot;days on hand&quot;,&quot;class&quot;],&quot;default&quot;:&quot;alphabetical&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 class Component extends DCLogic {
-  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, profile: 'me', camOn: false, camErr: false, capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
+  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, camOn: false, camErr: false, capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
   vidRef = React.createRef();
   timers = [];
 
@@ -421,47 +421,40 @@ class Component extends DCLogic {
   fd(d) { return String(d.getDate()).padStart(2, '0') + ' ' + this.MOS[d.getMonth()]; }
   fdy(d) { return this.fd(d) + ' ' + d.getFullYear(); }
 
-  dataKey(profile) {
-    const p = profile || (typeof localStorage !== 'undefined' && localStorage.getItem('vamm.profile')) || 'me';
-    return p === 'kaylene' ? 'vamm.v1.kaylene' : 'vamm.v1';
-  }
+  dataKey() { return 'vamm.v2'; }
 
-  boot(profile) {
-    const key = this.dataKey(profile);
+  boot() {
+    const key = this.dataKey();
     try { const raw = localStorage.getItem(key); if (raw) { const d = JSON.parse(raw); if (d && d.meds) return d; } } catch (e) {}
-    const d = key === 'vamm.v1' ? this.seed() : { settings: { lead: 10, ship: 6, renewLead: 21, ctrlExtra: 4, coldExtra: 3 }, doses: {}, meds: [] };
+    const d = this.seed();
     try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
     return d;
   }
 
-  switchProfile() {
-    const p = this.state.profile === 'me' ? 'kaylene' : 'me';
-    try { localStorage.setItem('vamm.profile', p); } catch (e) {}
-    this.setState({ profile: p, data: this.boot(p), activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, capEdit: null });
-  }
-
   seed() {
-    const t = this.tmid(), DAY = 864e5;
-    const ago = n => this.iso(new Date(+t - n * DAY));
-    const M = o => Object.assign({ brand: '', form: 'tab', route: 'PO', daysSupply: 90, prescriber: '', pharmacy: 'VA CMOP (mail)', rx: '', indication: '', drugClass: '', status: 'active', notes: '', kind: 'maint', schedule: '', cold: false, fulfil: 'mail', slots: ['am'], history: [] }, o);
-    const H = (m, prev) => { m.history = [{ date: m.filled, event: 'Filled — qty ' + m.qty }, { date: ago(prev), event: 'Filled — qty ' + m.qty }]; return m; };
+    const today = this.iso(this.tmid());
+    // Inventory as of first launch. Days-on-hand = qty / dosesPerDay from the
+    // fill date, so qty is set to (days on hand) × (doses/day) with filled=today.
+    // Bottle labels (A/B/C, each = days that bottle lasts) are kept in notes.
+    const M = o => Object.assign({ brand: '', form: 'tab', route: 'PO', daysSupply: 90, prescriber: '', pharmacy: 'VA CMOP (mail)', rx: '', indication: '', drugClass: '', status: 'active', notes: '', kind: 'maint', schedule: '', cold: false, fulfil: 'mail', slots: ['am'], history: [], filled: today }, o);
     return {
       settings: { lead: 10, ship: 6, renewLead: 21, ctrlExtra: 4, coldExtra: 3 },
       doses: {},
       meds: [
-        H(M({ id: 'm1', generic: 'carvedilol', brand: 'Coreg', strength: '25 mg', sig: '1 tab PO BID with food', dosesPerDay: 2, qty: 180, filled: ago(35), refills: 3, slots: ['am', 'pm'], drugClass: 'Non-selective β-blocker w/ α₁ blockade', indication: 'HFrEF 2/2 dilated cardiomyopathy', prescriber: 'Nguyen, T. — Cardiology', rx: '2718304', notes: 'Titrated from 12.5 mg BID 03/2026.' }), 125),
-        H(M({ id: 'm2', generic: 'cetirizine', brand: 'Zyrtec', strength: '10 mg', sig: '3 tabs (30 mg) PO daily', dosesPerDay: 3, qty: 270, filled: ago(86), refills: 2, slots: ['am'], drugClass: '2nd-gen H₁ antagonist', indication: 'Allergic rhinitis', prescriber: 'Ortiz, M. — Primary Care', rx: '2718311' }), 176),
-        H(M({ id: 'm3', generic: 'ivabradine', brand: 'Corlanor', strength: '5 mg', sig: '1 tab PO BID × 360 days', dosesPerDay: 2, qty: 180, filled: ago(72), refills: 0, slots: ['am', 'pm'], drugClass: 'Iƒ (HCN) channel inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718305', notes: 'Non-formulary — renewal goes through cardiology, allow extra time.' }), 162),
-        H(M({ id: 'm4', generic: 'empagliflozin', brand: 'Jardiance', strength: '10 mg', sig: '1 tab PO daily', dosesPerDay: 1, qty: 90, filled: ago(40), refills: 2, slots: ['am'], drugClass: 'SGLT2 inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718306' }), 130),
-        H(M({ id: 'm5', generic: 'sacubitril-valsartan', brand: 'Entresto', strength: '97-103 mg', sig: '1 tab PO BID', dosesPerDay: 2, qty: 180, filled: ago(82), refills: 1, slots: ['am', 'pm'], drugClass: 'ARNI', indication: 'Chronic HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718307' }), 172),
-        H(M({ id: 'm6', generic: 'venlafaxine ER', brand: 'Effexor XR', strength: '150 mg', form: 'cap SR 24h', sig: '2 caps (300 mg) PO QAM', dosesPerDay: 2, qty: 180, filled: ago(30), refills: 4, slots: ['am'], drugClass: 'SNRI', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718308' }), 120),
-        H(M({ id: 'm7', generic: 'bupropion SR', brand: 'Wellbutrin SR', strength: '150 mg', form: 'tab SR 12h', sig: '1 tab PO BID', dosesPerDay: 2, qty: 180, filled: ago(25), refills: 0, slots: ['am', 'pm'], drugClass: 'NDRI / aminoketone', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718309' }), 115),
-        H(M({ id: 'm8', generic: 'furosemide', brand: 'Lasix', strength: '20 mg', sig: '1 tab PO daily PRN', dosesPerDay: 2, qty: 60, filled: ago(12), refills: 1, kind: 'prn', slots: [], drugClass: 'Loop diuretic', indication: 'Volume overload — PRN', prescriber: 'Nguyen, T. — Cardiology', rx: '2718310', daysSupply: 30, notes: 'Doses/day = 2 as budgeted burn rate, not sig max.' }), 42)
+        M({ id: 'm1', generic: 'carvedilol', brand: 'Coreg', strength: '25 mg', sig: '1 tab PO BID with food', dosesPerDay: 2, qty: 64, refills: 3, slots: ['am', 'pm'], drugClass: 'Non-selective β-blocker w/ α₁ blockade', indication: 'HFrEF 2/2 dilated cardiomyopathy', prescriber: 'Nguyen, T. — Cardiology', rx: '2718304', notes: 'Bottles on hand: A32. Titrated from 12.5 mg BID 03/2026.' }),
+        M({ id: 'm2', generic: 'cetirizine', brand: 'Zyrtec', strength: '10 mg', sig: '3 tabs (30 mg) PO daily', dosesPerDay: 3, qty: 156, refills: 2, slots: ['am'], drugClass: '2nd-gen H₁ antagonist', indication: 'Allergic rhinitis', prescriber: 'Ortiz, M. — Primary Care', rx: '2718311', notes: 'Bottles on hand: A52.' }),
+        M({ id: 'm3', generic: 'ivabradine', brand: 'Corlanor', strength: '5 mg', sig: '1 tab PO BID × 360 days', dosesPerDay: 2, qty: 164, refills: 0, slots: ['am', 'pm'], drugClass: 'Iƒ (HCN) channel inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718305', notes: 'Bottles on hand: A22 B30 C30. Non-formulary — renewal goes through cardiology, allow extra time.' }),
+        M({ id: 'm4', generic: 'empagliflozin', brand: 'Jardiance', strength: '10 mg', sig: '1 tab PO daily', dosesPerDay: 1, qty: 63, refills: 2, slots: ['am'], drugClass: 'SGLT2 inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718306', notes: 'Bottles on hand: A63.' }),
+        M({ id: 'm5', generic: 'sacubitril-valsartan', brand: 'Entresto', strength: '97-103 mg', sig: '1 tab PO BID', dosesPerDay: 2, qty: 402, refills: 1, slots: ['am', 'pm'], drugClass: 'ARNI', indication: 'Chronic HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718307', notes: 'Bottles on hand: A78 B48 C75.' }),
+        M({ id: 'm6', generic: 'venlafaxine ER', brand: 'Effexor XR', strength: '150 mg', form: 'cap SR 24h', sig: '2 caps (300 mg) PO QAM', dosesPerDay: 2, qty: 128, refills: 4, slots: ['am'], drugClass: 'SNRI', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718308', notes: 'Bottles on hand: A19 B45.' }),
+        M({ id: 'm7', generic: 'bupropion SR', brand: 'Wellbutrin SR', strength: '150 mg', form: 'tab SR 12h', sig: '1 tab PO BID', dosesPerDay: 2, qty: 174, refills: 0, slots: ['am', 'pm'], drugClass: 'NDRI / aminoketone', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718309', notes: 'Bottles on hand: A87.' }),
+        M({ id: 'm8', generic: 'furosemide', brand: 'Lasix', strength: '20 mg', sig: '1 tab PO daily PRN', dosesPerDay: 2, qty: 646, refills: 1, kind: 'prn', slots: [], drugClass: 'Loop diuretic', indication: 'Volume overload — PRN', prescriber: 'Nguyen, T. — Cardiology', rx: '2718310', daysSupply: 30, notes: 'Bottles on hand: A143 B180. Doses/day = 2 as budgeted burn rate, not sig max.' }),
+        M({ id: 'm9', generic: 'eplerenone', brand: 'Inspra', strength: '50 mg', sig: '1 tab PO daily', dosesPerDay: 1, qty: 159, refills: 2, slots: ['am'], drugClass: 'Aldosterone antagonist (MRA)', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '', notes: 'Bottles on hand: A69 B45 C45. VERIFY strength / sig / refills — added from inventory, not in the original list.' })
       ]
     };
   }
 
-  persist(data) { try { localStorage.setItem(this.dataKey(this.state.profile), JSON.stringify(data)); } catch (e) {} this.setState({ data: { ...data } }); }
+  persist(data) { try { localStorage.setItem(this.dataKey(), JSON.stringify(data)); } catch (e) {} this.setState({ data: { ...data } }); }
   num(v, d) { const n = parseFloat(v); return isFinite(n) ? n : d; }
 
   calc(m) {
@@ -828,11 +821,6 @@ class Component extends DCLogic {
       onCapCancel: () => this.setState({ capEdit: null }),
       capPadB: st.wide ? '16px' : '80px',
       privacyOn: st.privacy,
-      onProfile: () => this.switchProfile(),
-      profNameA: 'ME',
-      profThumbLeft: st.profile === 'me' ? '3px' : '50%',
-      profColorA: st.profile === 'me' ? '#fff' : '#5c7382',
-      profColorB: st.profile === 'kaylene' ? '#fff' : '#5c7382',
       onPrivacy: () => this.setState({ privacy: true }),
       onUnlock: () => this.setState({ privacy: false }),
       railList: railS(onList), railAdd: railS(st.view === 'form'), railSet: railS(st.view === 'settings'),

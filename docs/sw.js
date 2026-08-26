@@ -6,7 +6,7 @@
    - STATIC ASSETS (js/fonts/icons): cache-first (fast, and they rarely change);
      refreshed in the background when online.
    Bump CACHE_VERSION on every deploy so old caches are cleared on activate. */
-const CACHE_VERSION = 'rx-manager-v8';
+const CACHE_VERSION = 'rx-manager-v9';
 const ASSETS = [
   './',
   './index.html',
