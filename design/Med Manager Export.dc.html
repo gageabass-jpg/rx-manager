@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail" data-bg-color="#16232e">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#16232e"></rect>
+    <rect x="480" y="290" width="240" height="230" rx="24" fill="none" stroke="#0e7490" stroke-width="22"></rect>
+    <path d="M530 290 V240 a70 70 0 0 1 140 0 V290" fill="none" stroke="#0e7490" stroke-width="22" stroke-linecap="round"></path>
+    <text x="600" y="620" text-anchor="middle" font-family="monospace" font-size="52" font-weight="700" letter-spacing="10" fill="#cfe3ea">RX MANAGER</text>
+  </svg>
+</template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#10191f;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0e7490;text-decoration:underline}a:hover{color:#155e6e}
+input,select,textarea,button{font-family:inherit}
+input:focus,textarea:focus{outline:3px solid #0e7490;outline-offset:-1px}
+button{touch-action:manipulation;border-radius:7px}
+@keyframes capPulse{0%,100%{opacity:1}50%{opacity:.5}}
+video{display:block}
+</style>
+</helmet>
+<div style="display:flex;align-items:stretch;min-height:100vh;background:#eef1f2;color:#17242e">
+
+<sc-if value="{{wide}}" hint-placeholder-val="{{ true }}">
+  <div style="width:184px;flex-shrink:0;background:#16232e;color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+    <div style="padding:18px 16px 14px 16px;border-bottom:1px solid #33465a">
+      <div style="font-size:14px;font-weight:700;letter-spacing:2px">Rx Manager</div>
+      <div style="font:500 12px 'IBM Plex Mono',monospace;color:#8fa3ad;margin-top:5px">{{todayStr}}</div>
+    </div>
+    <button onClick="{{goDash}}" style="{{railList}}">LIST</button>
+    <button onClick="{{goSettings}}" style="{{railSet}}">LEAD TIMES</button>
+    <button onClick="{{goAdd}}" style="{{railAdd}}">+ ADD</button>
+    <button onClick="{{onPrivacy}}" style="margin-top:auto;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-sizing:border-box;min-height:76px;border-radius:0;border:none;border-top:1px solid #33465a;cursor:pointer;font:700 14px 'IBM Plex Mono',monospace;letter-spacing:2px;background:#0d161d;color:#cfe3ea">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cfe3ea" stroke-width="2" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"></rect><path d="M8 10.5 V7.5 a4 4 0 0 1 8 0 V10.5"></path></svg>
+    </button>
+    
+  </div>
+</sc-if>
+
+<div style="flex:1;min-width:0;padding-bottom:{{mainPadB}}">
+
+<sc-if value="{{vDash}}" hint-placeholder-val="{{ true }}">
+  <div style="background:#16232e;color:#fff;padding:16px 20px 13px 20px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+    <div>
+      <div style="font-size:16px;font-weight:700;letter-spacing:2px">MEDICATION LIST</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8fa3ad;margin-top:4px">{{todayStr}} · {{countLine}}</div>
+    </div>
+  </div>
+
+  <sc-if value="{{hasQueue}}" hint-placeholder-val="{{ true }}">
+    <div style="background:#b42318;color:#fff;padding:10px 20px;font:700 12px 'IBM Plex Mono',monospace;letter-spacing:2px">ACTION REQUIRED ({{actionCount}})</div>
+    <sc-for list="{{qRows}}" as="q" hint-placeholder-count="2">
+      <div style="display:flex;background:#fff;border-bottom:2px solid #c3cbd1">
+        <div onClick="{{q.onOpen}}" style="width:116px;flex-shrink:0;background:{{q.tagBg}};color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:14px 6px;cursor:pointer">
+          <div style="font:600 36px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;line-height:1">{{q.doh}}</div>
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:1px">DAYS</div>
+          <div style="font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.5px;border-top:1px solid rgba(255,255,255,.45);padding-top:4px;margin-top:2px;text-align:center">{{q.tag}}</div>
+        </div>
+        <div style="flex:1;min-width:0;padding:13px 16px 14px 16px">
+          <div onClick="{{q.onOpen}}" style="cursor:pointer">
+            <div style="font-size:18px;font-weight:700">{{q.name}} <span style="font-weight:400;color:#5c6b75">{{q.brandP}}</span></div>
+            <div style="font:500 13px 'IBM Plex Mono',monospace;color:#5c6b75;margin-top:5px">{{q.line2}}</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+            <a href="{{q.vaUrl}}" target="_blank" style="text-decoration:none;border-radius:7px;background:#0e7490;color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:15px 18px;display:inline-block">{{q.vaVerb}} ↗</a>
+            <button onClick="{{q.onRefill}}" style="border:2px solid #16232e;background:#fff;color:#16232e;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:13px 18px;cursor:pointer">MARK REFILLED</button>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </sc-if>
+  <sc-if value="{{allClear}}" hint-placeholder-val="{{ false }}">
+    <div style="background:#166534;color:#fff;padding:14px 20px;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px">NO ACTION NEEDED — {{nextLine}}</div>
+  </sc-if>
+  <sc-if value="{{hasRenewNote}}" hint-placeholder-val="{{ false }}">
+    <div style="background:#3538cd;color:#fff;padding:12px 20px;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.5px">0 REFILLS — RENEWAL REQUIRED BEFORE NEXT FILL: {{renewNote}}</div>
+  </sc-if>
+
+  <div style="background:#16232e;color:#fff;padding:10px 20px;margin-top:12px;font:700 12px 'IBM Plex Mono',monospace;letter-spacing:2px">ACTIVE MEDICATIONS</div>
+  <div style="display:flex;gap:8px;overflow-x:auto;padding:10px 20px;background:#e2e7ea;border-bottom:1px solid #c3cbd1">
+    <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+      <button onClick="{{c.onPick}}" style="{{c.style}}">{{c.label}}</button>
+    </sc-for>
+  </div>
+  <div style="display:flex;justify-content:space-between;background:#334552;color:#fff;padding:8px 20px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1.5px">
+    <div>MEDICATION / SIG / CLASS</div><div>DAYS ON HAND</div>
+  </div>
+  <sc-for list="{{rRows}}" as="r" hint-placeholder-count="6">
+    <div onClick="{{r.onOpen}}" style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid #c3cbd1;cursor:pointer;background:{{r.rowBg}};min-height:60px;box-sizing:border-box">
+      <div style="min-width:0">
+        <div style="font-size:18px;font-weight:700">{{r.name}} <span style="font-weight:400;color:#5c6b75">{{r.brandP}}</span></div>
+        <div style="font:500 13px 'IBM Plex Mono',monospace;margin-top:4px">{{r.meta1}}</div>
+        <div style="font-size:12px;color:#5c6b75;letter-spacing:.3px;margin-top:4px;text-transform:uppercase">{{r.meta2}}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;display:flex;align-items:center;gap:14px">
+        <sc-if value="{{r.showTag}}" hint-placeholder-val="{{ false }}">
+          <div title="{{r.tagTitle}}" style="width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:7px;background:{{r.tagBg}};color:#fff;font:700 17px 'IBM Plex Mono',monospace">{{r.tagIcon}}</div>
+        </sc-if>
+        <sc-if value="{{r.isPrn}}" hint-placeholder-val="{{ false }}">
+          <span style="font:700 11px 'IBM Plex Mono',monospace;letter-spacing:1px;border:1px solid #8fa3ad;color:#5c6b75;padding:3px 8px">PRN</span>
+        </sc-if>
+        <div>
+          <div style="font:600 34px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;color:{{r.dohColor}};line-height:1">{{r.doh}}</div>
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-top:2px">DAYS</div>
+        </div>
+      </div>
+    </div>
+  </sc-for>
+  <sc-if value="{{hasInactive}}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{onToggleInactive}}" style="display:block;width:100%;text-align:left;border:none;border-bottom:1px solid #c3cbd1;background:#e2e7ea;padding:16px 20px;font:700 12px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5c6b75;cursor:pointer">{{inactiveLabel}}</button>
+    <sc-if value="{{showInactive}}" hint-placeholder-val="{{ false }}">
+      <sc-for list="{{iRows}}" as="r" hint-placeholder-count="1">
+        <div onClick="{{r.onOpen}}" style="display:flex;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #c3cbd1;cursor:pointer;color:#5c6b75;background:#fff;min-height:48px;box-sizing:border-box;align-items:center">
+          <div style="font-size:15px">{{r.name}} <span style="font-size:14px">{{r.brandP}}</span></div>
+          <div style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1px">{{r.statusLabel}}</div>
+        </div>
+      </sc-for>
+    </sc-if>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{vDetail}}" hint-placeholder-val="{{ false }}">
+  <div style="background:#16232e;color:#fff;padding:12px 20px 14px 20px">
+    <button onClick="{{dt.onBack}}" style="border:1px solid #4d6272;background:none;padding:12px 18px;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#cfe3ea;cursor:pointer">← LIST</button>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:12px">
+      <div style="font-size:24px;font-weight:700">{{dt.name}} <span style="font-weight:400;color:#8fa3ad;font-size:19px">{{dt.brandP}}</span></div>
+      <span style="font:700 12px 'IBM Plex Mono',monospace;letter-spacing:1px;background:{{dt.tierBg}};color:#fff;padding:5px 10px;flex-shrink:0">{{dt.tierTag}}</span>
+    </div>
+  </div>
+  <div style="margin:14px 20px;border:1px solid #c3cbd1;background:#fff">
+    <div style="background:#334552;color:#fff;padding:7px 14px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px">SUPPLY CALCULATION</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr">
+      <div style="padding:14px 16px;border-right:1px solid #c3cbd1">
+        <div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75">REMAINING</div>
+        <div style="font:600 30px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;margin-top:4px">{{dt.remaining}}</div>
+        <div style="font:500 11px 'IBM Plex Mono',monospace;color:#5c6b75">{{dt.remUnit}}</div>
+      </div>
+      <div style="padding:14px 16px;border-right:1px solid #c3cbd1">
+        <div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75">DAYS ON HAND</div>
+        <div style="font:600 30px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;color:{{dt.dohColor}};margin-top:4px">{{dt.doh}}</div>
+        <div style="font:500 11px 'IBM Plex Mono',monospace;color:#5c6b75">DAYS</div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75">RUN-OUT</div>
+        <div style="font:600 30px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;margin-top:4px">{{dt.runOut}}</div>
+        <div style="font:500 11px 'IBM Plex Mono',monospace;color:#5c6b75">{{dt.runOutYr}}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #c3cbd1;padding:11px 14px;font:500 13px 'IBM Plex Mono',monospace">
+      <span style="color:#5c6b75">{{dt.orderByLabel}}</span> <span style="font-weight:700;color:{{dt.dohColor}}">{{dt.orderBy}}</span> <span style="color:#5c6b75">— {{dt.leadNote}}</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;padding:0 20px 14px 20px;flex-wrap:wrap">
+    <a href="{{dt.vaUrl}}" target="_blank" style="text-decoration:none;border-radius:7px;background:#0e7490;color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:16px 18px;display:inline-block">VA {{dt.vaVerb}} ↗</a>
+    <button onClick="{{dt.onRefill}}" style="border:2px solid #16232e;background:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 18px;cursor:pointer">MARK REFILLED</button>
+    <button onClick="{{dt.onEdit}}" style="border:2px solid #16232e;background:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 18px;cursor:pointer">EDIT</button>
+  </div>
+  <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px">RECORD</div>
+  <div style="background:#fff;padding:0 20px;display:grid;grid-template-columns:150px 1fr">
+    <sc-for list="{{dt.fields}}" as="fr" hint-placeholder-count="10">
+      <div style="display:contents">
+        <div style="padding:10px 8px 10px 0;border-bottom:1px solid #dfe4e7;font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;text-transform:uppercase">{{fr.k}}</div>
+        <div style="padding:9px 0;border-bottom:1px solid #dfe4e7;font:500 14px 'IBM Plex Mono',monospace;overflow-wrap:anywhere">{{fr.v}}</div>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{dt.hasSigPlain}}" hint-placeholder-val="{{ false }}">
+    <div style="padding:10px 20px 0 20px;font-size:13px;color:#5c6b75;font-style:italic">Sig, expanded: {{dt.sigPlain}}</div>
+  </sc-if>
+  <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin-top:16px">FILL HISTORY</div>
+  <div style="background:#fff;padding:0 20px">
+    <sc-for list="{{dt.hist}}" as="h" hint-placeholder-count="2">
+      <div style="display:flex;gap:18px;padding:9px 0;border-bottom:1px solid #dfe4e7;font:500 13px 'IBM Plex Mono',monospace">
+        <div style="width:110px;flex-shrink:0;font-variant-numeric:tabular-nums">{{h.date}}</div>
+        <div>{{h.event}}</div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:10px;padding:20px;flex-wrap:wrap">
+    <button onClick="{{dt.onHold}}" style="border:2px solid #8fa3ad;background:none;color:#5c6b75;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 16px;cursor:pointer">{{dt.holdLabel}}</button>
+    <button onClick="{{dt.onDc}}" style="border:2px solid #8fa3ad;background:none;color:#5c6b75;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 16px;cursor:pointer">{{dt.dcLabel}}</button>
+    <button onClick="{{dt.onDel}}" style="border:2px solid #b42318;background:{{dt.delBg}};color:{{dt.delColor}};font:600 12px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 16px;cursor:pointer;margin-left:auto">{{dt.delLabel}}</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{vForm}}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#16232e;color:#fff;position:sticky;top:0;z-index:5">
+    <div style="font-size:15px;font-weight:700;letter-spacing:2px">{{formTitle}}</div>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{goCapture}}" style="border:none;background:#166534;color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:13px 16px;cursor:pointer">SCAN LABEL</button>
+      <button onClick="{{onCancel}}" style="border:1px solid #4d6272;background:none;color:#cfe3ea;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:13px 16px;cursor:pointer">CANCEL</button>
+      <button onClick="{{onSave}}" style="border:none;background:#0e7490;color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 22px;cursor:pointer">SAVE</button>
+    </div>
+  </div>
+  <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}">
+    <div style="padding:12px 20px;background:#b42318;color:#fff;font:600 13px 'IBM Plex Mono',monospace">{{err}}</div>
+  </sc-if>
+  <div style="padding:0 0 24px 0;max-width:820px">
+    <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:14px 0 12px 0">IDENTITY</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;padding:0 20px">
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">GENERIC NAME *</div><input value="{{f.generic}}" onChange="{{fs.generic}}" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">BRAND</div><input value="{{f.brand}}" onChange="{{fs.brand}}" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">STRENGTH * (mg / mcg / mEq / mL / units)</div><input value="{{f.strength}}" onChange="{{fs.strength}}" placeholder="25 mg" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">FORM</div><input value="{{f.form}}" onChange="{{fs.form}}" placeholder="tab" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">ROUTE</div><input value="{{f.route}}" onChange="{{fs.route}}" placeholder="PO" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">DRUG CLASS</div><input value="{{f.drugClass}}" onChange="{{fs.drugClass}}" placeholder="ACE inhibitor" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+    </div>
+    <div style="margin-top:12px;padding:0 20px"><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">INDICATION</div><input value="{{f.indication}}" onChange="{{fs.indication}}" placeholder="HTN" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+
+    <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:18px 0 12px 0">SIG &amp; SCHEDULE</div>
+    <div style="padding:0 20px"><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">SIG — AS WRITTEN ON LABEL *</div><input value="{{f.sig}}" onChange="{{fs.sig}}" placeholder="1 tab PO BID" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+    <div style="margin-top:12px;padding:0 20px;max-width:260px"><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">DOSES / DAY *</div><input value="{{f.dosesPerDay}}" onChange="{{fs.dosesPerDay}}" inputMode="decimal" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding:0 20px">
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">TYPE</div><div style="display:flex"><sc-for list="{{segKind}}" as="b" hint-placeholder-count="2"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">FULFILLMENT</div><div style="display:flex"><sc-for list="{{segFulfil}}" as="b" hint-placeholder-count="2"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+    </div>
+
+    <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:18px 0 12px 0">SUPPLY</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;padding:0 20px">
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">QTY DISPENSED *</div><input value="{{f.qty}}" onChange="{{fs.qty}}" inputMode="numeric" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">DATE LAST FILLED *</div><input type="date" value="{{f.filled}}" onChange="{{fs.filled}}" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">DAYS SUPPLY</div><input value="{{f.daysSupply}}" onChange="{{fs.daysSupply}}" inputMode="numeric" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">REFILLS REMAINING *</div><input value="{{f.refills}}" onChange="{{fs.refills}}" inputMode="numeric" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+    </div>
+
+    <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:18px 0 12px 0">RX SOURCE</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;padding:0 20px">
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">PRESCRIBER</div><input value="{{f.prescriber}}" onChange="{{fs.prescriber}}" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">PHARMACY</div><input value="{{f.pharmacy}}" onChange="{{fs.pharmacy}}" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">RX NUMBER</div><input value="{{f.rx}}" onChange="{{fs.rx}}" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace"></div>
+    </div>
+
+    <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:18px 0 12px 0">FLAGS — AFFECT ORDER-BY LEAD</div>
+    <div style="padding:0 20px"><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">CONTROLLED SUBSTANCE SCHEDULE</div><div style="display:flex;max-width:520px"><sc-for list="{{segSched}}" as="b" hint-placeholder-count="5"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+    <div style="margin-top:12px;padding:0 20px"><button onClick="{{onCold}}" style="{{coldStyle}}">{{coldLabel}}</button></div>
+    <div style="margin-top:12px;padding:0 20px"><div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5c6b75;margin-bottom:5px">STATUS</div><div style="display:flex;max-width:520px"><sc-for list="{{segStatus}}" as="b" hint-placeholder-count="3"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+
+    <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:18px 0 12px 0">NOTES</div>
+    <div style="padding:0 20px"><textarea value="{{f.notes}}" onChange="{{fs.notes}}" rows="3" style="width:100%;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:13px 12px;font:500 16px 'IBM Plex Mono',monospace;resize:vertical"></textarea></div>
+  </div>
+</sc-if>
+
+<sc-if value="{{vSettings}}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#16232e;color:#fff">
+    <div style="font-size:15px;font-weight:700;letter-spacing:2px">LEAD TIMES</div>
+    <button onClick="{{goDash}}" style="border:none;background:#0e7490;color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:14px 22px;cursor:pointer">DONE</button>
+  </div>
+  <div style="padding:8px 20px 28px 20px;max-width:720px">
+    <sc-for list="{{setRows}}" as="s" hint-placeholder-count="5">
+      <div style="display:flex;gap:18px;align-items:center;padding:14px 0;border-bottom:1px solid #c3cbd1">
+        <input value="{{s.val}}" onChange="{{s.onChange}}" inputMode="numeric" style="width:88px;flex-shrink:0;box-sizing:border-box;border:2px solid #8fa3ad;background:#fff;padding:14px 8px;font:600 20px 'IBM Plex Mono',monospace;text-align:center">
+        <div>
+          <div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px">{{s.label}}</div>
+          <div style="font-size:13px;color:#5c6b75;margin-top:3px">{{s.note}}</div>
+        </div>
+      </div>
+    </sc-for>
+    <div style="margin-top:16px;font:500 13px 'IBM Plex Mono',monospace;color:#5c6b75;line-height:1.7">ORDER-BY = RUN-OUT − LEAD.<br>0 REFILLS → RENEWAL LEAD APPLIES.<br>CONTROLLED / COLD-CHAIN DAYS ADD TO EITHER.</div>
+  </div>
+</sc-if>
+
+<sc-if value="{{vCapture}}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:{{capDir}};height:100vh;overflow:hidden">
+    <div style="position:relative;flex:{{capFeedFlex}};min-height:230px;background:#0a1116;overflow:hidden">
+      <video ref="{{vidRef}}" autoPlay="{{ true }}" muted="{{ true }}" playsInline="{{ true }}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover"></video>
+      <sc-if value="{{camErr}}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#5c7382">
+          <div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px">CAMERA UNAVAILABLE</div>
+          <div style="font:500 11px 'IBM Plex Mono',monospace">SIMULATED READ IN PROGRESS</div>
+        </div>
+      </sc-if>
+      <div style="position:absolute;left:9%;right:9%;top:16%;bottom:16%;border:3px solid {{retColor}};transition:border-color .3s ease;pointer-events:none"></div>
+      <div style="position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;pointer-events:none">
+        <div style="background:rgba(8,14,19,.84);color:#fff;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:13px 18px;max-width:88%;text-align:center">{{capGuide}}</div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:0;overflow-y:auto;background:#eef1f2;display:flex;flex-direction:column">
+      <div style="padding:13px 16px;background:#16232e;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0">
+        <div>
+          <div style="font:700 15px 'IBM Plex Mono',monospace;letter-spacing:1px">{{capCountLine}}</div>
+          <div style="font:500 11px 'IBM Plex Mono',monospace;color:#8fa3ad;margin-top:3px">{{reqLine}} · OPTIONAL FIELDS DO NOT BLOCK</div>
+        </div>
+        <button onClick="{{onCapReset}}" style="border:1px solid #4d6272;background:none;color:#cfe3ea;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:13px 15px;cursor:pointer">RESET</button>
+      </div>
+      <div style="padding:10px 12px 0 12px"><button onClick="{{onReview}}" style="{{reviewStyle}}">REVIEW &amp; SAVE →</button></div>
+      <div style="padding:12px 16px 0 16px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;color:#5c6b75">REQUIRED</div>
+      <sc-for list="{{capReq}}" as="r" hint-placeholder-count="6">
+        <div onClick="{{r.onTap}}" style="{{r.style}}">
+          <div style="flex:1;min-width:0">
+            <div style="font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:1px;color:{{r.labelColor}}">{{r.label}}</div>
+            <sc-if value="{{r.showValue}}" hint-placeholder-val="{{ true }}">
+              <div style="font:500 15px 'IBM Plex Mono',monospace;color:{{r.valColor}};margin-top:4px;overflow-wrap:anywhere">{{r.valueLine}}</div>
+            </sc-if>
+            <sc-if value="{{r.isConflict}}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button onClick="{{r.onPickA}}" style="flex:1;min-height:48px;border:2px solid #b42318;background:#fff;color:#b42318;font:600 14px 'IBM Plex Mono',monospace;cursor:pointer">{{r.optA}}</button>
+                <button onClick="{{r.onPickB}}" style="flex:1;min-height:48px;border:2px solid #b42318;background:#fff;color:#b42318;font:600 14px 'IBM Plex Mono',monospace;cursor:pointer">{{r.optB}}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{r.isEditing}}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <input value="{{capEditVal}}" onChange="{{onCapEditChange}}" autoFocus="{{ true }}" style="flex:1;min-width:0;box-sizing:border-box;border:2px solid #0e7490;padding:12px;font:500 15px 'IBM Plex Mono',monospace">
+                <button onClick="{{onCapDone}}" style="border:none;background:#0e7490;color:#fff;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:0 18px;cursor:pointer">DONE</button>
+                <button onClick="{{onCapCancel}}" style="border:1px solid #8fa3ad;background:#fff;color:#5c6b75;font:600 12px 'IBM Plex Mono',monospace;padding:0 16px;cursor:pointer">✕</button>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{r.isManual}}" hint-placeholder-val="{{ false }}">
+            <span style="font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:1px;border:1px solid #166534;color:#166534;padding:3px 6px;flex-shrink:0">MANUAL</span>
+          </sc-if>
+          <sc-if value="{{r.showIcon}}" hint-placeholder-val="{{ false }}">
+            <div style="{{r.iconStyle}}">{{r.icon}}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+      <div style="padding:12px 16px 0 16px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;color:#5c6b75">OPTIONAL</div>
+      <sc-for list="{{capOpt}}" as="r" hint-placeholder-count="4">
+        <div onClick="{{r.onTap}}" style="{{r.style}}">
+          <div style="flex:1;min-width:0">
+            <div style="font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:1px;color:{{r.labelColor}}">{{r.label}}</div>
+            <sc-if value="{{r.showValue}}" hint-placeholder-val="{{ true }}">
+              <div style="font:500 15px 'IBM Plex Mono',monospace;color:{{r.valColor}};margin-top:4px;overflow-wrap:anywhere">{{r.valueLine}}</div>
+            </sc-if>
+            <sc-if value="{{r.isEditing}}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <input value="{{capEditVal}}" onChange="{{onCapEditChange}}" autoFocus="{{ true }}" style="flex:1;min-width:0;box-sizing:border-box;border:2px solid #0e7490;padding:12px;font:500 15px 'IBM Plex Mono',monospace">
+                <button onClick="{{onCapDone}}" style="border:none;background:#0e7490;color:#fff;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:0 18px;cursor:pointer">DONE</button>
+                <button onClick="{{onCapCancel}}" style="border:1px solid #8fa3ad;background:#fff;color:#5c6b75;font:600 12px 'IBM Plex Mono',monospace;padding:0 16px;cursor:pointer">✕</button>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{r.isManual}}" hint-placeholder-val="{{ false }}">
+            <span style="font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:1px;border:1px solid #166534;color:#166534;padding:3px 6px;flex-shrink:0">MANUAL</span>
+          </sc-if>
+          <sc-if value="{{r.showIcon}}" hint-placeholder-val="{{ false }}">
+            <div style="{{r.iconStyle}}">{{r.icon}}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+      <div style="height:{{capPadB}};flex-shrink:0"></div>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+
+<sc-if value="{{narrow}}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:0;left:0;width:100%;display:flex;background:#16232e;z-index:10">
+    <button onClick="{{goDash}}" style="{{navListStyle}}">LIST</button>
+    <button onClick="{{goAdd}}" style="{{navAddStyle}}">+ ADD</button>
+    <button onClick="{{goCapture}}" style="{{navScanStyle}}">SCAN</button>
+    <button onClick="{{goSettings}}" style="{{navSetStyle}}">LEADS</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{privacyOn}}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{onUnlock}}" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0a1116;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:pointer">
+    <button onClick="{{onUnlock}}" style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;border:2px solid #33465a;border-radius:14px;background:#0d161d;cursor:pointer">
+      <svg width="104" height="104" viewBox="0 0 24 24" fill="none" stroke="#cfe3ea" stroke-width="1.6" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"></rect><path d="M8 10.5 V7.5 a4 4 0 0 1 8 0 V10.5"></path></svg>
+    </button>
+    <div style="font:500 14px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#8fa3ad">Rx Manager is locked. Tap to unlock.</div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:600},&quot;showBrand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;rosterOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alphabetical&quot;,&quot;days on hand&quot;,&quot;class&quot;],&quot;default&quot;:&quot;alphabetical&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;}}">
+class Component extends DCLogic {
+  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, camOn: false, camErr: false, capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
+  vidRef = React.createRef();
+  timers = [];
+
+  componentDidMount() {
+    this._onRs = () => { const w = window.innerWidth >= 860; if (w !== this.state.wide) this.setState({ wide: w }); };
+    window.addEventListener('resize', this._onRs);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onRs); this.stopCam(); }
+
+  tmid() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  iso(d) { const p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  pd(s) { return new Date(s + 'T00:00:00'); }
+  MOS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  fd(d) { return String(d.getDate()).padStart(2, '0') + ' ' + this.MOS[d.getMonth()]; }
+  fdy(d) { return this.fd(d) + ' ' + d.getFullYear(); }
+
+  boot() {
+    try { const raw = localStorage.getItem('vamm.v1'); if (raw) { const d = JSON.parse(raw); if (d && d.meds) return d; } } catch (e) {}
+    const d = this.seed();
+    try { localStorage.setItem('vamm.v1', JSON.stringify(d)); } catch (e) {}
+    return d;
+  }
+
+  seed() {
+    const t = this.tmid(), DAY = 864e5;
+    const ago = n => this.iso(new Date(+t - n * DAY));
+    const M = o => Object.assign({ brand: '', form: 'tab', route: 'PO', daysSupply: 90, prescriber: '', pharmacy: 'VA CMOP (mail)', rx: '', indication: '', drugClass: '', status: 'active', notes: '', kind: 'maint', schedule: '', cold: false, fulfil: 'mail', slots: ['am'], history: [] }, o);
+    const H = (m, prev) => { m.history = [{ date: m.filled, event: 'Filled — qty ' + m.qty }, { date: ago(prev), event: 'Filled — qty ' + m.qty }]; return m; };
+    return {
+      settings: { lead: 10, ship: 6, renewLead: 21, ctrlExtra: 4, coldExtra: 3 },
+      doses: {},
+      meds: [
+        H(M({ id: 'm1', generic: 'carvedilol', brand: 'Coreg', strength: '25 mg', sig: '1 tab PO BID with food', dosesPerDay: 2, qty: 180, filled: ago(35), refills: 3, slots: ['am', 'pm'], drugClass: 'Non-selective β-blocker w/ α₁ blockade', indication: 'HFrEF 2/2 dilated cardiomyopathy', prescriber: 'Nguyen, T. — Cardiology', rx: '2718304', notes: 'Titrated from 12.5 mg BID 03/2026.' }), 125),
+        H(M({ id: 'm2', generic: 'cetirizine', brand: 'Zyrtec', strength: '10 mg', sig: '3 tabs (30 mg) PO daily', dosesPerDay: 3, qty: 270, filled: ago(86), refills: 2, slots: ['am'], drugClass: '2nd-gen H₁ antagonist', indication: 'Allergic rhinitis', prescriber: 'Ortiz, M. — Primary Care', rx: '2718311' }), 176),
+        H(M({ id: 'm3', generic: 'ivabradine', brand: 'Corlanor', strength: '5 mg', sig: '1 tab PO BID × 360 days', dosesPerDay: 2, qty: 180, filled: ago(72), refills: 0, slots: ['am', 'pm'], drugClass: 'Iƒ (HCN) channel inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718305', notes: 'Non-formulary — renewal goes through cardiology, allow extra time.' }), 162),
+        H(M({ id: 'm4', generic: 'empagliflozin', brand: 'Jardiance', strength: '10 mg', sig: '1 tab PO daily', dosesPerDay: 1, qty: 90, filled: ago(40), refills: 2, slots: ['am'], drugClass: 'SGLT2 inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718306' }), 130),
+        H(M({ id: 'm5', generic: 'sacubitril-valsartan', brand: 'Entresto', strength: '97-103 mg', sig: '1 tab PO BID', dosesPerDay: 2, qty: 180, filled: ago(82), refills: 1, slots: ['am', 'pm'], drugClass: 'ARNI', indication: 'Chronic HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718307' }), 172),
+        H(M({ id: 'm6', generic: 'venlafaxine ER', brand: 'Effexor XR', strength: '150 mg', form: 'cap SR 24h', sig: '2 caps (300 mg) PO QAM', dosesPerDay: 2, qty: 180, filled: ago(30), refills: 4, slots: ['am'], drugClass: 'SNRI', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718308' }), 120),
+        H(M({ id: 'm7', generic: 'bupropion SR', brand: 'Wellbutrin SR', strength: '150 mg', form: 'tab SR 12h', sig: '1 tab PO BID', dosesPerDay: 2, qty: 180, filled: ago(25), refills: 0, slots: ['am', 'pm'], drugClass: 'NDRI / aminoketone', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718309' }), 115),
+        H(M({ id: 'm8', generic: 'furosemide', brand: 'Lasix', strength: '20 mg', sig: '1 tab PO daily PRN', dosesPerDay: 2, qty: 60, filled: ago(12), refills: 1, kind: 'prn', slots: [], drugClass: 'Loop diuretic', indication: 'Volume overload — PRN', prescriber: 'Nguyen, T. — Cardiology', rx: '2718310', daysSupply: 30, notes: 'Doses/day = 2 as budgeted burn rate, not sig max.' }), 42)
+      ]
+    };
+  }
+
+  persist(data) { try { localStorage.setItem('vamm.v1', JSON.stringify(data)); } catch (e) {} this.setState({ data: { ...data } }); }
+  num(v, d) { const n = parseFloat(v); return isFinite(n) ? n : d; }
+
+  calc(m) {
+    const s = this.state.data.settings, t = this.tmid(), DAY = 864e5;
+    const lead0 = this.num(s.lead, 10), ship = this.num(s.ship, 6), rlead0 = this.num(s.renewLead, 21);
+    const extra = (m.schedule ? this.num(s.ctrlExtra, 4) : 0) + (m.cold ? this.num(s.coldExtra, 3) : 0);
+    const dpd = Math.max(0.01, this.num(m.dosesPerDay, 1));
+    const elapsed = Math.max(0, Math.round((t - this.pd(m.filled)) / DAY));
+    const remaining = Math.max(0, this.num(m.qty, 0) - elapsed * dpd);
+    const doh = Math.floor(remaining / dpd);
+    const runOut = new Date(+t + doh * DAY);
+    const renewal = this.num(m.refills, 0) <= 0;
+    const lead = (renewal ? Math.max(lead0, rlead0) : lead0) + extra;
+    const orderBy = new Date(+runOut - lead * DAY);
+    const dto = Math.round((orderBy - t) / DAY);
+    const RED = '#b42318', AMB = '#b54708', IND = '#3538cd', INK = '#17242e';
+    let tier;
+    if (doh <= 0) tier = { k: 'out', rank: 5, tag: 'OUT', c: RED };
+    else if (doh <= ship) tier = { k: 'overdue', rank: 4, tag: renewal ? 'OVERDUE·RENEW' : 'OVERDUE', c: RED };
+    else if (renewal && dto <= 0) tier = { k: 'renew', rank: 3, tag: 'RENEW NOW', c: IND };
+    else if (!renewal && dto <= 0) tier = { k: 'order', rank: 2, tag: 'ORDER NOW', c: AMB };
+    else if (renewal) tier = { k: 'norefill', rank: 1, tag: '0 RF', c: IND };
+    else tier = { k: 'ok', rank: 0, tag: '', c: INK };
+    const dohColor = tier.rank >= 2 ? tier.c : INK;
+    return { elapsed, remaining, doh, runOut, orderBy, dto, lead, extra, renewal, tier, dohColor };
+  }
+
+  expandSig(sig) {
+    const map = { PO: 'by mouth', SL: 'sublingual', SC: 'subcutaneous', IM: 'intramuscular', BID: 'twice daily', TID: 'three times daily', QID: 'four times daily', QHS: 'at bedtime', QAM: 'every morning', QD: 'daily', PRN: 'as needed', q6h: 'every 6 h', q8h: 'every 8 h', q12h: 'every 12 h' };
+    let out = sig, hit = false;
+    for (const k of Object.keys(map)) { const re = new RegExp('\\b' + k + '\\b', 'gi'); if (re.test(out)) { hit = true; out = out.replace(re, map[k]); } }
+    return hit ? out : '';
+  }
+
+  go(view, extra) { if (this.state.view === 'capture' && view !== 'capture') this.stopCam(); this.setState(Object.assign({ view, err: '', delArm: false }, extra || {})); }
+
+  capDefs() {
+    const t = this.tmid();
+    return [
+      ['drug', 'DRUG (GENERIC + BRAND)', 1, 'carvedilol (Coreg)'],
+      ['strength', 'STRENGTH', 1, '25 mg', '2.5 mg'],
+      ['sig', 'SIG — AS WRITTEN', 1, '1 tab PO BID with food'],
+      ['qty', 'QTY DISPENSED', 1, '180'],
+      ['filled', 'FILL DATE', 1, this.iso(new Date(+t - 864e5 * 10))],
+      ['refills', 'REFILLS REMAINING', 1, '3'],
+      ['rx', 'RX NUMBER', 0, '2718304'],
+      ['prescriber', 'PRESCRIBER', 0, null],
+      ['pharmacy', 'PHARMACY', 0, 'VA CMOP (mail)'],
+      ['discard', 'DISCARD DATE', 0, null]
+    ];
+  }
+
+  initCam() {
+    if (this._camTried) { this.startSim(); return; }
+    this._camTried = true;
+    const fail = () => { this.setState({ camErr: true }); this.startSim(); };
+    try {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(stm => {
+        this._camStream = stm;
+        this.setState({ camOn: true }, () => { if (this.vidRef.current) this.vidRef.current.srcObject = stm; });
+        this.startSim();
+      }).catch(fail);
+    } catch (e) { fail(); }
+  }
+
+  startSim() {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    const cap = this.state.data.capture || {};
+    const msgs = { drug: 'HOLD STEADY — READING DRUG NAME', strength: 'READING STRENGTH', sig: 'READING SIG', qty: 'READING FILL DATA', filled: 'READING FILL DATA', refills: 'READING FILL DATA', rx: 'READING RX INFO', pharmacy: 'READING RX INFO' };
+    let t = 800;
+    for (const [k, label, req, val, alt] of this.capDefs()) {
+      if (!val) continue;
+      const f = cap[k];
+      if (f && f.state && f.state !== 'empty') continue;
+      this.timers.push(setTimeout(() => { this.setCap(k, { state: 'extracting' }); this.setState({ capMsg: msgs[k] || 'READING LABEL' }); }, t)); t += 950;
+      this.timers.push(setTimeout(() => { this.setCap(k, alt ? { state: 'conflict', value: val, alt } : { state: 'captured', value: val }); }, t)); t += 380;
+    }
+    this.timers.push(setTimeout(() => { this.setState({ capMsg: 'ENTER REMAINING FIELDS MANUALLY — TAP A ROW' }); }, t));
+  }
+
+  stopCam() {
+    if (this._camStream) { this._camStream.getTracks().forEach(x => x.stop()); this._camStream = null; }
+    this._camTried = false;
+    this.timers.forEach(clearTimeout); this.timers = [];
+    if (this.state.camOn || this.state.camErr) this.setState({ camOn: false, camErr: false, capEdit: null });
+  }
+
+  setCap(k, obj) { const d = this.state.data; d.capture = Object.assign({}, d.capture, { [k]: obj }); this.persist(d); }
+
+  capReset() {
+    const d = this.state.data; d.capture = {}; this.persist(d);
+    this.setState({ capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME' });
+    this.startSim();
+  }
+
+  reviewSave() {
+    const c = this.state.data.capture || {};
+    const v = k => { const f = c[k]; return f && (f.state === 'captured' || f.state === 'manual') ? String(f.value) : ''; };
+    if (!this.capDefs().filter(x => x[2]).every(x => { const f = c[x[0]]; return f && (f.state === 'captured' || f.state === 'manual'); })) return;
+    const form = this.blankForm();
+    const drug = v('drug'); const mm = drug.match(/^(.*?)\s*\((.+)\)\s*$/);
+    form.generic = mm ? mm[1].trim() : drug; form.brand = mm ? mm[2].trim() : '';
+    form.strength = v('strength'); form.sig = v('sig'); form.qty = v('qty'); form.refills = v('refills');
+    const fd = v('filled'); if (/^\d{4}-\d{2}-\d{2}$/.test(fd)) form.filled = fd;
+    form.rx = v('rx'); form.prescriber = v('prescriber'); form.pharmacy = v('pharmacy') || form.pharmacy;
+    if (v('discard')) form.notes = 'Discard after ' + v('discard') + '.';
+    const sg = form.sig.toUpperCase();
+    form.dosesPerDay = /BID/.test(sg) ? '2' : /TID/.test(sg) ? '3' : /QID/.test(sg) ? '4' : '1';
+    this.go('form', { form, editId: null });
+  }
+
+  markRefilled(id) {
+    const d = this.state.data, m = d.meds.find(x => x.id === id);
+    if (!m) return;
+    m.filled = this.iso(this.tmid());
+    m.refills = Math.max(0, this.num(m.refills, 0) - 1);
+    m.history = [{ date: m.filled, event: 'Filled — qty ' + m.qty + ' · ' + m.refills + ' RF left' }].concat(m.history || []);
+    this.persist(d);
+  }
+
+  setStatus(id, status) {
+    const d = this.state.data, m = d.meds.find(x => x.id === id);
+    if (!m) return; m.status = status;
+    m.history = [{ date: this.iso(this.tmid()), event: 'Status → ' + status.toUpperCase() }].concat(m.history || []);
+    this.persist(d);
+  }
+
+  blankForm() { return { generic: '', brand: '', strength: '', form: 'tab', route: 'PO', drugClass: '', indication: '', sig: '', dosesPerDay: '', kind: 'maint', slots: ['am'], qty: '', filled: this.iso(this.tmid()), daysSupply: '', refills: '', prescriber: '', pharmacy: 'VA CMOP (mail)', rx: '', schedule: '', fulfil: 'mail', cold: false, status: 'active', notes: '' }; }
+  med2form(m) { const f = {}; for (const k of Object.keys(this.blankForm())) f[k] = k === 'slots' ? (m.slots || []).slice() : k === 'cold' ? !!m.cold : String(m[k] == null ? '' : m[k]); return f; }
+  setF(k, v) { this.setState({ form: Object.assign({}, this.state.form, { [k]: v }), err: '' }); }
+
+  saveForm() {
+    const f = this.state.form;
+    const dpd = parseFloat(f.dosesPerDay), qty = parseFloat(f.qty);
+    let err = '';
+    if (!f.generic.trim()) err = 'Generic name required.';
+    else if (!f.strength.trim()) err = 'Strength required.';
+    else if (!/\d\s*(mg|mcg|meq|ml|unit|units|g|%)/i.test(f.strength)) err = 'Strength needs an explicit unit — mg, mcg, mEq, mL, units.';
+    else if (!f.sig.trim()) err = 'Sig required.';
+    else if (!(dpd > 0)) err = 'Doses/day must be > 0.';
+    else if (!(qty > 0)) err = 'Qty dispensed must be > 0.';
+    else if (!f.filled) err = 'Fill date required.';
+    if (err) { this.setState({ err }); return; }
+    const d = this.state.data;
+    const med = {
+      generic: f.generic.trim(), brand: f.brand.trim(), strength: f.strength.trim(), form: f.form.trim(), route: f.route.trim() || 'PO',
+      drugClass: f.drugClass.trim(), indication: f.indication.trim(), sig: f.sig.trim(), dosesPerDay: dpd, kind: f.kind, slots: f.slots,
+      qty: qty, filled: f.filled, daysSupply: parseFloat(f.daysSupply) || '', refills: Math.max(0, Math.floor(parseFloat(f.refills) || 0)),
+      prescriber: f.prescriber.trim(), pharmacy: f.pharmacy.trim(), rx: f.rx.trim(), schedule: f.schedule, fulfil: f.fulfil, cold: !!f.cold, status: f.status, notes: f.notes
+    };
+    let id = this.state.editId;
+    if (id) { const old = d.meds.find(x => x.id === id); Object.assign(old, med); }
+    else { id = 'm' + Date.now(); d.meds.push(Object.assign({ id, history: [{ date: f.filled, event: 'Filled — qty ' + qty }] }, med)); }
+    this.persist(d);
+    this.go('detail', { activeId: id, form: null, editId: null });
+  }
+
+  seg(on) { return "flex:1;min-height:52px;padding:8px 2px;border-radius:0;border:2px solid #16232e;margin-left:-2px;cursor:pointer;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:.5px;background:" + (on ? '#16232e' : '#fff') + ';color:' + (on ? '#fff' : '#16232e'); }
+
+  renderVals() {
+    const st = this.state, d = st.data, s = d.settings, t = this.tmid();
+    const VA = 'https://www.va.gov/my-health/medications/refill';
+    const showBrand = this.props.showBrand ?? true;
+    const rosterOrder = this.props.rosterOrder ?? 'alphabetical';
+    const brandP = m => showBrand && m.brand ? '(' + m.brand + ')' : '';
+    const act = d.meds.filter(m => m.status === 'active');
+    const cc = new Map(act.map(m => [m.id, this.calc(m)]));
+    const open = id => () => this.go('detail', { activeId: id });
+
+    const queue = act.filter(m => cc.get(m.id).tier.rank >= 2)
+      .sort((a, b) => cc.get(b.id).tier.rank - cc.get(a.id).tier.rank || cc.get(a.id).doh - cc.get(b.id).doh);
+    const qRows = queue.map(m => {
+      const c = cc.get(m.id);
+      const verb = c.renewal ? 'RENEW BY' : 'ORDER BY';
+      const when = c.dto < 0 ? Math.abs(c.dto) + ' D PAST' : c.dto === 0 ? 'DUE TODAY' : 'IN ' + c.dto + ' D';
+      return {
+        tag: c.tier.tag, tagBg: c.tier.c, name: m.generic, brandP: brandP(m),
+        line2: verb + ' ' + this.fd(c.orderBy) + ' — ' + when + ' · ' + this.num(m.refills, 0) + ' RF' + (c.renewal ? ' — PRESCRIBER ACTION' : ''),
+        doh: c.doh, vaUrl: VA, vaVerb: c.renewal ? 'VA — REQUEST RENEWAL' : 'VA REFILL',
+        onOpen: open(m.id), onRefill: () => this.markRefilled(m.id)
+      };
+    });
+    const renewQuiet = act.filter(m => cc.get(m.id).tier.k === 'norefill').map(m => m.generic);
+
+    let next = null;
+    for (const m of act) { const c = cc.get(m.id); if (!next || c.orderBy < next.c.orderBy) next = { m, c }; }
+    const nextLine = next ? 'NEXT ORDER-BY ' + this.fd(next.c.orderBy) + ' (' + next.m.generic.toUpperCase() + ')' : 'NO ACTIVE MEDS';
+
+    const classes = [...new Set(act.map(m => m.drugClass).filter(Boolean))];
+    const chipS = on => "flex-shrink:0;min-height:48px;padding:10px 16px;border:2px solid " + (on ? '#16232e' : '#8fa3ad') + ";cursor:pointer;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.5px;white-space:nowrap;background:" + (on ? '#16232e' : '#fff') + ';color:' + (on ? '#fff' : '#3c4952');
+    const chips = [{ label: 'ALL CLASSES', on: !st.filter, onPick: () => this.setState({ filter: '' }), style: chipS(!st.filter) }]
+      .concat(classes.map(cl => ({ label: cl.toUpperCase(), on: st.filter === cl, onPick: () => this.setState({ filter: st.filter === cl ? '' : cl }), style: chipS(st.filter === cl) })));
+
+    let roster = act.filter(m => !st.filter || m.drugClass === st.filter);
+    if (rosterOrder === 'days on hand') roster = roster.slice().sort((a, b) => cc.get(a.id).doh - cc.get(b.id).doh);
+    else if (rosterOrder === 'class') roster = roster.slice().sort((a, b) => (a.drugClass || '').localeCompare(b.drugClass || '') || a.generic.localeCompare(b.generic));
+    else roster = roster.slice().sort((a, b) => a.generic.localeCompare(b.generic));
+    const rRows = roster.map((m, i) => {
+      const c = cc.get(m.id);
+      return {
+        name: m.generic, brandP: brandP(m), rowBg: i % 2 ? '#f3f6f7' : '#fff',
+        meta1: m.strength + ' ' + m.form + ' · ' + m.sig,
+        meta2: [m.drugClass, m.indication].filter(Boolean).join(' · '),
+        doh: c.doh, dohColor: c.dohColor,
+        showTag: c.tier.rank > 0, tagBg: c.tier.c,
+        tagIcon: (c.tier.k === 'renew' || c.tier.k === 'norefill') ? '↻' : '!',
+        tagTitle: c.tier.k === 'out' ? 'Supply exhausted' : c.tier.k === 'overdue' ? 'Overdue — order immediately' : c.tier.k === 'renew' ? 'Renewal needed now' : c.tier.k === 'order' ? 'Order now' : 'No refills — renewal required before next fill',
+        isPrn: m.kind === 'prn' && c.tier.rank === 0, onOpen: open(m.id)
+      };
+    });
+
+    const inact = d.meds.filter(m => m.status !== 'active');
+    const iRows = inact.map(m => ({ name: m.generic, brandP: brandP(m), statusLabel: m.status === 'hold' ? 'ON HOLD' : 'DISCONTINUED', onOpen: open(m.id) }));
+
+    let dt = {};
+    const dm = d.meds.find(x => x.id === st.activeId);
+    if (dm && st.view === 'detail') {
+      const c = this.calc(dm);
+      const leadBits = [(c.renewal ? Math.max(this.num(s.lead, 10), this.num(s.renewLead, 21)) + ' d renewal' : this.num(s.lead, 10) + ' d base')];
+      if (dm.schedule) leadBits.push('+' + this.num(s.ctrlExtra, 4) + ' d ' + dm.schedule);
+      if (dm.cold) leadBits.push('+' + this.num(s.coldExtra, 3) + ' d cold chain');
+      const plain = this.expandSig(dm.sig);
+      dt = {
+        name: dm.generic, brandP: brandP(dm),
+        tierTag: c.tier.rank > 0 ? c.tier.tag : (dm.status === 'active' ? 'OK' : dm.status.toUpperCase()),
+        tierBg: c.tier.rank > 0 ? c.tier.c : '#5c6b75',
+        remaining: Math.round(c.remaining * 10) / 10, remUnit: (dm.form || 'units').toUpperCase(),
+        doh: c.doh, dohColor: c.dohColor, runOut: this.fd(c.runOut), runOutYr: c.runOut.getFullYear(),
+        orderByLabel: c.renewal ? 'RENEW BY' : 'ORDER BY', orderBy: this.fdy(c.orderBy),
+        leadNote: 'lead ' + c.lead + ' d (' + leadBits.join(' ') + ')',
+        vaUrl: VA, vaVerb: c.renewal ? 'RENEWAL' : 'REFILL',
+        hasSigPlain: !!plain, sigPlain: plain,
+        fields: [
+          ['Strength', dm.strength + ' ' + dm.form], ['Route', dm.route], ['Sig', dm.sig],
+          ['Doses/day', String(dm.dosesPerDay)], ['Class', dm.drugClass || '—'], ['Indication', dm.indication || '—'],
+          ['Type', dm.kind === 'prn' ? 'PRN' : 'Maintenance'], ['Schedule', dm.schedule || '— (not controlled)'],
+          ['Qty dispensed', String(dm.qty)], ['Date filled', this.fdy(this.pd(dm.filled))],
+          ['Days supply', dm.daysSupply ? String(dm.daysSupply) : '—'],
+          ['Refills left', String(this.num(dm.refills, 0)) + (c.renewal ? ' — renewal required' : '')],
+          ['Fulfillment', dm.fulfil === 'mail' ? 'Mail order' : 'Window pickup'],
+          ['Cold chain', dm.cold ? 'Yes — refrigerate' : 'No'],
+          ['Prescriber', dm.prescriber || '—'], ['Pharmacy', dm.pharmacy || '—'], ['Rx #', dm.rx || '—'],
+          ['Notes', dm.notes || '—']
+        ].map(x => ({ k: x[0], v: x[1] })),
+        hist: (dm.history || []).map(h => ({ date: this.fdy(this.pd(h.date)), event: h.event })),
+        holdLabel: dm.status === 'hold' ? 'RESUME' : 'PLACE ON HOLD',
+        dcLabel: dm.status === 'dc' ? 'REACTIVATE' : 'DISCONTINUE',
+        delLabel: st.delArm ? 'CONFIRM DELETE' : 'DELETE',
+        delBg: st.delArm ? '#b42318' : 'none', delColor: st.delArm ? '#fff' : '#b42318',
+        onBack: () => this.go('dash', { activeId: null }),
+        onEdit: () => this.go('form', { form: this.med2form(dm), editId: dm.id }),
+        onRefill: () => this.markRefilled(dm.id),
+        onHold: () => this.setStatus(dm.id, dm.status === 'hold' ? 'active' : 'hold'),
+        onDc: () => this.setStatus(dm.id, dm.status === 'dc' ? 'active' : 'dc'),
+        onDel: () => {
+          if (!st.delArm) { this.setState({ delArm: true }); return; }
+          const data = this.state.data; data.meds = data.meds.filter(x => x.id !== dm.id);
+          this.persist(data); this.go('dash', { activeId: null });
+        }
+      };
+    }
+
+    const f = st.form || {};
+    const fs = {};
+    for (const k of ['generic', 'brand', 'strength', 'form', 'route', 'drugClass', 'indication', 'sig', 'dosesPerDay', 'qty', 'filled', 'daysSupply', 'refills', 'prescriber', 'pharmacy', 'rx', 'notes']) fs[k] = e => this.setF(k, e.target.value);
+    const segOf = (key, opts) => opts.map(([val, label]) => ({ label, style: this.seg(f[key] === val), onPick: () => this.setF(key, val) }));
+    const segKind = segOf('kind', [['maint', 'MAINT'], ['prn', 'PRN']]);
+    const segFulfil = segOf('fulfil', [['mail', 'MAIL'], ['window', 'WINDOW']]);
+    const segSched = segOf('schedule', [['', 'NONE'], ['C-II', 'C-II'], ['C-III', 'C-III'], ['C-IV', 'C-IV'], ['C-V', 'C-V']]);
+    const segStatus = segOf('status', [['active', 'ACTIVE'], ['hold', 'ON HOLD'], ['dc', 'DISCONTINUED']]);
+
+    const setDefs = [
+      ['lead', 'MAIL-ORDER LEAD (D)', 'Order-by = run-out − this. VA guidance: 10 days.'],
+      ['renewLead', 'RENEWAL LEAD (D)', 'Used when 0 refills remain — prescriber must act.'],
+      ['ctrlExtra', 'CONTROLLED +D', 'Added for any C-II–C-V med.'],
+      ['coldExtra', 'COLD CHAIN +D', 'Added for refrigerated meds.'],
+      ['ship', 'OVERDUE THRESHOLD (D)', 'At or below this many days on hand, mail likely arrives after run-out.']
+    ];
+    const setRows = setDefs.map(([k, label, note]) => ({
+      val: String(s[k]), label, note,
+      onChange: e => { const data = this.state.data; data.settings[k] = e.target.value; this.persist(data); }
+    }));
+
+    // capture view
+    const cap = d.capture || {};
+    const capDs = this.capDefs();
+    const got = k => { const f = cap[k]; return f && (f.state === 'captured' || f.state === 'manual'); };
+    const capCount = capDs.filter(x => got(x[0])).length;
+    const reqDs = capDs.filter(x => x[2]);
+    const reqGot = reqDs.filter(x => got(x[0])).length;
+    const reqDone = reqGot === reqDs.length;
+    const anyConflict = capDs.some(x => (cap[x[0]] || {}).state === 'conflict');
+    const mkRow = ([k, label]) => {
+      const fl = cap[k] || { state: 'empty' };
+      const editing = st.capEdit && st.capEdit.key === k;
+      const S = fl.state;
+      let style = 'display:flex;flex-shrink:0;align-items:center;gap:12px;padding:12px 14px;margin:6px 12px;min-height:60px;box-sizing:border-box;transition:background .15s ease,border-color .15s ease;';
+      if (editing) style += 'border:2px solid #0e7490;background:#fff';
+      else if (S === 'empty') style += 'border:1px solid #c3cbd1;background:#f7f9fa;cursor:pointer';
+      else if (S === 'extracting') style += 'border:2px solid #b54708;background:#fdf3ea;animation:capPulse 1.2s ease-in-out infinite';
+      else if (S === 'conflict') style += 'border:2px solid #b42318;background:#fbeeec';
+      else if (S === 'manual') style += 'border:2px dashed #166534;background:#fff';
+      else style += 'border:2px solid #166534;background:#eef7f0';
+      return {
+        label, style,
+        labelColor: S === 'empty' && !editing ? '#8fa3ad' : '#3c4952',
+        onTap: (S === 'empty' && !editing) ? () => this.setState({ capEdit: { key: k, val: '' } }) : undefined,
+        showValue: !editing && S !== 'conflict',
+        valueLine: (S === 'captured' || S === 'manual') ? String(fl.value) : S === 'extracting' ? 'READING…' : 'TAP TO ENTER',
+        valColor: (S === 'captured' || S === 'manual') ? '#17242e' : S === 'extracting' ? '#b54708' : '#aab6bc',
+        isConflict: S === 'conflict' && !editing, optA: fl.value, optB: fl.alt,
+        onPickA: () => this.setCap(k, { state: 'captured', value: fl.value }),
+        onPickB: () => this.setCap(k, { state: 'captured', value: fl.alt }),
+        isEditing: !!editing,
+        showIcon: S === 'captured' || S === 'manual' || S === 'conflict',
+        icon: S === 'conflict' ? '!' : '✓',
+        iconStyle: 'width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;background:' + (S === 'conflict' ? '#b42318' : '#166534'),
+        isManual: S === 'manual'
+      };
+    };
+    const capReq = reqDs.map(mkRow);
+    const capOpt = capDs.filter(x => !x[2]).map(mkRow);
+    const retColor = reqDone ? '#3fb56b' : (capCount > 0 || st.camOn || st.camErr) ? '#e8a23d' : '#8fa3ad';
+    const capGuide = reqDone ? 'REQUIRED FIELDS CAPTURED — REVIEW & SAVE' : anyConflict ? 'CONFLICT — TAP THE CORRECT VALUE IN THE LIST' : st.capMsg;
+
+    const railS = on => "display:block;width:100%;box-sizing:border-box;min-height:64px;padding:0 16px;text-align:left;border-radius:0;border:none;border-bottom:1px solid #33465a;cursor:pointer;font:700 14px 'IBM Plex Mono',monospace;letter-spacing:2px;background:" + (on ? '#0e7490' : 'transparent') + ';color:' + (on ? '#fff' : '#8fa3ad');
+    const navS = on => "flex:1;min-height:56px;border-radius:0;border:none;cursor:pointer;font:700 12px 'IBM Plex Mono',monospace;letter-spacing:1.5px;background:" + (on ? '#0e7490' : 'transparent') + ';color:' + (on ? '#fff' : '#8fa3ad');
+    const onList = st.view === 'dash' || st.view === 'detail';
+
+    return {
+      wide: st.wide, narrow: !st.wide, mainPadB: st.wide ? '24px' : '72px',
+      vDash: st.view === 'dash', vDetail: st.view === 'detail', vForm: st.view === 'form', vSettings: st.view === 'settings',
+      todayStr: this.fd(t) + ' ' + t.getFullYear(),
+      countLine: act.length + ' ACTIVE · ' + qRows.length + ' NEED ACTION',
+      goDash: () => this.go('dash'), goSettings: () => this.go('settings'),
+      goAdd: () => this.go('form', { form: this.blankForm(), editId: null }),
+      hasQueue: qRows.length > 0, actionCount: qRows.length, qRows,
+      allClear: qRows.length === 0, nextLine,
+      hasRenewNote: renewQuiet.length > 0, renewNote: renewQuiet.join(', '),
+      chips, rRows,
+      hasInactive: inact.length > 0, showInactive: st.showInactive,
+      inactiveLabel: (st.showInactive ? '▾' : '▸') + ' ON HOLD / DISCONTINUED (' + inact.length + ')',
+      onToggleInactive: () => this.setState({ showInactive: !st.showInactive }), iRows,
+      dt,
+      f, fs, segKind, segFulfil, segSched, segStatus,
+      coldStyle: this.seg(!!f.cold) + ';flex:none;padding:8px 20px', coldLabel: f.cold ? 'COLD CHAIN — YES' : 'COLD CHAIN — NO',
+      onCold: () => this.setF('cold', !f.cold),
+      formTitle: st.editId ? 'EDIT — ' + (f.generic || '').toUpperCase() : 'ADD MEDICATION',
+      hasErr: !!st.err, err: st.err,
+      onSave: () => this.saveForm(), onCancel: () => this.go(st.editId ? 'detail' : 'dash', { form: null, editId: null }),
+      setRows,
+      vCapture: st.view === 'capture',
+      goCapture: () => { this.go('capture'); this.initCam(); },
+      capDir: st.wide ? 'row' : 'column', capFeedFlex: st.wide ? '0 0 58%' : '0 0 40%',
+      camErr: st.camErr, vidRef: this.vidRef, retColor, capGuide,
+      capCountLine: capCount + ' OF ' + capDs.length + ' CAPTURED',
+      reqLine: 'REQUIRED ' + reqGot + '/' + reqDs.length,
+      onCapReset: () => this.capReset(), onReview: () => this.reviewSave(),
+      reviewStyle: "width:100%;box-sizing:border-box;border:none;min-height:56px;font:700 14px 'IBM Plex Mono',monospace;letter-spacing:1.5px;cursor:pointer;transition:background .15s;" + (reqDone ? 'background:#0e7490;color:#fff' : 'background:#dfe4e7;color:#8fa3ad'),
+      capReq, capOpt,
+      capEditVal: st.capEdit ? st.capEdit.val : '',
+      onCapEditChange: e => this.setState({ capEdit: Object.assign({}, this.state.capEdit, { val: e.target.value }) }),
+      onCapDone: () => { const ce = this.state.capEdit; if (!ce) return; if (ce.val.trim()) this.setCap(ce.key, { state: 'manual', value: ce.val.trim() }); this.setState({ capEdit: null }); },
+      onCapCancel: () => this.setState({ capEdit: null }),
+      capPadB: st.wide ? '16px' : '80px',
+      privacyOn: st.privacy,
+      onPrivacy: () => this.setState({ privacy: true }),
+      onUnlock: () => this.setState({ privacy: false }),
+      railList: railS(onList), railAdd: railS(st.view === 'form'), railSet: railS(st.view === 'settings'),
+      navListStyle: navS(onList), navAddStyle: navS(st.view === 'form'), navScanStyle: navS(st.view === 'capture'), navSetStyle: navS(st.view === 'settings')
+    };
+  }
+}
+</script>
+</body>
+</html>

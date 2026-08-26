@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e7e8e3;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1a1b1c;text-decoration:underline}a:hover{color:#5f6368}
+input,select,textarea,button{font-family:inherit}
+input:focus,textarea:focus{outline:2px solid #1a1b1c;outline-offset:-1px}
+</style>
+</helmet>
+<div style="max-width:520px;margin:0 auto;min-height:100vh;background:#f7f7f4;color:#1a1b1c;padding-bottom:74px;position:relative">
+
+<sc-if value="{{vDash}}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:16px 16px 10px 16px;border-bottom:2px solid #1a1b1c">
+    <div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:2px">MEDICATION LIST</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5f6368;margin-top:3px">{{todayStr}} · {{countLine}}</div>
+    </div>
+    <button onClick="{{goSettings}}" style="border:1px solid #1a1b1c;background:#fff;color:#1a1b1c;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:5px 8px;cursor:pointer">LEAD TIMES</button>
+  </div>
+
+  <sc-if value="{{hasQueue}}" hint-placeholder-val="{{ true }}">
+    <div style="padding:10px 16px 4px 16px;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#b42318">ACTION REQUIRED ({{actionCount}})</div>
+    <sc-for list="{{qRows}}" as="q" hint-placeholder-count="2">
+      <div style="border-bottom:1px solid #d8d9d4;padding:10px 16px 12px 16px">
+        <div onClick="{{q.onOpen}}" style="display:flex;justify-content:space-between;gap:12px;cursor:pointer">
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font:700 9px 'IBM Plex Mono',monospace;letter-spacing:1px;background:{{q.tagBg}};color:#fff;padding:2px 6px">{{q.tag}}</span>
+              <span style="font-size:14px;font-weight:600">{{q.name}}</span>
+              <span style="font-size:13px;color:#5f6368">{{q.brandP}}</span>
+            </div>
+            <div style="font:500 11px 'IBM Plex Mono',monospace;color:#5f6368;margin-top:5px">{{q.line2}}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font:600 26px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;color:{{q.dohColor}};line-height:1">{{q.doh}}</div>
+            <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-top:2px">DAYS ON HAND</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:9px">
+          <a href="{{q.vaUrl}}" target="_blank" style="text-decoration:none;border:1px solid #1a1b1c;background:#1a1b1c;color:#fff;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:6px 10px">{{q.vaVerb}} ↗</a>
+          <button onClick="{{q.onRefill}}" style="border:1px solid #1a1b1c;background:#fff;color:#1a1b1c;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:6px 10px;cursor:pointer">MARK REFILLED</button>
+        </div>
+      </div>
+    </sc-for>
+  </sc-if>
+  <sc-if value="{{allClear}}" hint-placeholder-val="{{ false }}">
+    <div style="border-bottom:1px solid #d8d9d4;padding:12px 16px;font:500 11px 'IBM Plex Mono',monospace;color:#5f6368">NO ACTION NEEDED — {{nextLine}}</div>
+  </sc-if>
+  <sc-if value="{{hasRenewNote}}" hint-placeholder-val="{{ false }}">
+    <div style="border-bottom:1px solid #d8d9d4;background:#eef0fb;padding:9px 16px;font:500 11px 'IBM Plex Mono',monospace;color:#3538cd">0 REFILLS — RENEWAL REQUIRED BEFORE NEXT FILL: {{renewNote}}</div>
+  </sc-if>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px 16px">
+    <div style="font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368">ACTIVE — DAYS ON HAND</div>
+  </div>
+  <div style="display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px 16px;border-bottom:1px solid #1a1b1c">
+    <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+      <button onClick="{{c.onPick}}" style="{{c.style}}">{{c.label}}</button>
+    </sc-for>
+  </div>
+  <sc-for list="{{rRows}}" as="r" hint-placeholder-count="6">
+    <div onClick="{{r.onOpen}}" style="display:flex;justify-content:space-between;gap:12px;padding:10px 16px;border-bottom:1px solid #d8d9d4;cursor:pointer">
+      <div style="min-width:0">
+        <div style="font-size:14px;font-weight:600">{{r.name}} <span style="font-weight:400;color:#5f6368">{{r.brandP}}</span></div>
+        <div style="font:500 11px 'IBM Plex Mono',monospace;margin-top:3px">{{r.meta1}}</div>
+        <div style="font-size:10.5px;color:#5f6368;letter-spacing:.3px;margin-top:3px;text-transform:uppercase">{{r.meta2}}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font:600 26px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;color:{{r.dohColor}};line-height:1">{{r.doh}}</div>
+        <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-top:2px">DAYS</div>
+        <sc-if value="{{r.showTag}}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:4px"><span style="font:700 9px 'IBM Plex Mono',monospace;letter-spacing:1px;background:{{r.tagBg}};color:#fff;padding:1px 5px">{{r.tag}}</span></div>
+        </sc-if>
+        <sc-if value="{{r.isPrn}}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:4px"><span style="font:700 9px 'IBM Plex Mono',monospace;letter-spacing:1px;border:1px solid #9a9d99;color:#5f6368;padding:0 5px">PRN</span></div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-for>
+  <sc-if value="{{hasInactive}}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{onToggleInactive}}" style="display:block;width:100%;text-align:left;border:none;border-bottom:1px solid #d8d9d4;background:none;padding:10px 16px;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;cursor:pointer">{{inactiveLabel}}</button>
+    <sc-if value="{{showInactive}}" hint-placeholder-val="{{ false }}">
+      <sc-for list="{{iRows}}" as="r" hint-placeholder-count="1">
+        <div onClick="{{r.onOpen}}" style="display:flex;justify-content:space-between;padding:9px 16px;border-bottom:1px solid #d8d9d4;cursor:pointer;color:#5f6368">
+          <div style="font-size:13px">{{r.name}} <span style="font-size:12px">{{r.brandP}}</span></div>
+          <div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:1px;align-self:center">{{r.statusLabel}}</div>
+        </div>
+      </sc-for>
+    </sc-if>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{vSched}}" hint-placeholder-val="{{ false }}">
+  <div style="padding:16px 16px 10px 16px;border-bottom:2px solid #1a1b1c">
+    <div style="font-size:13px;font-weight:700;letter-spacing:2px">DAILY SCHEDULE</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5f6368;margin-top:3px">{{todayFull}} · LOGGING OPTIONAL — SUPPLY MATH RUNS OFF FILL DATES</div>
+  </div>
+  <sc-for list="{{schedGroups}}" as="g" hint-placeholder-count="4">
+    <div>
+      <div style="padding:12px 16px 6px 16px;border-bottom:1px solid #1a1b1c;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368">{{g.label}}</div>
+      <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+        <div style="display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid #d8d9d4">
+          <button onClick="{{r.onToggle}}" style="width:24px;height:24px;flex-shrink:0;border:1.5px solid #1a1b1c;background:{{r.boxBg}};color:#fff;font-size:14px;line-height:1;cursor:pointer;padding:0">{{r.mark}}</button>
+          <div style="min-width:0">
+            <div style="font-size:14px;font-weight:600">{{r.name}} <span style="font-weight:400;color:#5f6368">{{r.brandP}}</span></div>
+            <div style="font:500 11px 'IBM Plex Mono',monospace;color:#5f6368;margin-top:2px">{{r.sub}}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+</sc-if>
+
+<sc-if value="{{vDetail}}" hint-placeholder-val="{{ false }}">
+  <div style="padding:14px 16px 10px 16px;border-bottom:2px solid #1a1b1c">
+    <button onClick="{{dt.onBack}}" style="border:none;background:none;padding:0;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;cursor:pointer">← LIST</button>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:8px">
+      <div style="font-size:19px;font-weight:700">{{dt.name}} <span style="font-weight:400;color:#5f6368;font-size:16px">{{dt.brandP}}</span></div>
+      <span style="font:700 9px 'IBM Plex Mono',monospace;letter-spacing:1px;background:{{dt.tierBg}};color:#fff;padding:2px 6px;flex-shrink:0">{{dt.tierTag}}</span>
+    </div>
+  </div>
+  <div style="margin:14px 16px;border:2px solid #1a1b1c">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr">
+      <div style="padding:10px 12px;border-right:1px solid #d8d9d4">
+        <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368">REMAINING</div>
+        <div style="font:600 22px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;margin-top:3px">{{dt.remaining}}</div>
+        <div style="font:500 9px 'IBM Plex Mono',monospace;color:#5f6368">{{dt.remUnit}}</div>
+      </div>
+      <div style="padding:10px 12px;border-right:1px solid #d8d9d4">
+        <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368">DAYS ON HAND</div>
+        <div style="font:600 22px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;color:{{dt.dohColor}};margin-top:3px">{{dt.doh}}</div>
+        <div style="font:500 9px 'IBM Plex Mono',monospace;color:#5f6368">DAYS</div>
+      </div>
+      <div style="padding:10px 12px">
+        <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368">RUN-OUT</div>
+        <div style="font:600 22px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;margin-top:3px">{{dt.runOut}}</div>
+        <div style="font:500 9px 'IBM Plex Mono',monospace;color:#5f6368">{{dt.runOutYr}}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #1a1b1c;padding:8px 12px;font:500 11px 'IBM Plex Mono',monospace">
+      <span style="color:#5f6368">{{dt.orderByLabel}}</span> <span style="font-weight:700;color:{{dt.dohColor}}">{{dt.orderBy}}</span> <span style="color:#5f6368">— {{dt.leadNote}}</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;padding:0 16px 14px 16px">
+    <a href="{{dt.vaUrl}}" target="_blank" style="text-decoration:none;border:1px solid #1a1b1c;background:#1a1b1c;color:#fff;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:7px 10px">VA {{dt.vaVerb}} ↗</a>
+    <button onClick="{{dt.onRefill}}" style="border:1px solid #1a1b1c;background:#fff;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:7px 10px;cursor:pointer">MARK REFILLED</button>
+    <button onClick="{{dt.onEdit}}" style="border:1px solid #1a1b1c;background:#fff;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:7px 10px;cursor:pointer">EDIT</button>
+  </div>
+  <div style="border-top:1px solid #1a1b1c;margin:0 16px;display:grid;grid-template-columns:112px 1fr">
+    <sc-for list="{{dt.fields}}" as="fr" hint-placeholder-count="10">
+      <div style="display:contents">
+        <div style="padding:7px 8px 7px 0;border-bottom:1px solid #d8d9d4;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;text-transform:uppercase">{{fr.k}}</div>
+        <div style="padding:6px 0;border-bottom:1px solid #d8d9d4;font:500 12px 'IBM Plex Mono',monospace;overflow-wrap:anywhere">{{fr.v}}</div>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{dt.hasSigPlain}}" hint-placeholder-val="{{ false }}">
+    <div style="padding:8px 16px 0 16px;font-size:11.5px;color:#5f6368;font-style:italic">Sig, expanded: {{dt.sigPlain}}</div>
+  </sc-if>
+  <div style="padding:16px 16px 6px 16px;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368">FILL HISTORY</div>
+  <div style="margin:0 16px;border-top:1px solid #1a1b1c">
+    <sc-for list="{{dt.hist}}" as="h" hint-placeholder-count="2">
+      <div style="display:flex;gap:14px;padding:6px 0;border-bottom:1px solid #d8d9d4;font:500 11.5px 'IBM Plex Mono',monospace">
+        <div style="width:92px;flex-shrink:0;font-variant-numeric:tabular-nums">{{h.date}}</div>
+        <div>{{h.event}}</div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:8px;padding:18px 16px">
+    <button onClick="{{dt.onHold}}" style="border:1px solid #9a9d99;background:none;color:#5f6368;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:7px 10px;cursor:pointer">{{dt.holdLabel}}</button>
+    <button onClick="{{dt.onDc}}" style="border:1px solid #9a9d99;background:none;color:#5f6368;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:7px 10px;cursor:pointer">{{dt.dcLabel}}</button>
+    <button onClick="{{dt.onDel}}" style="border:1px solid #b42318;background:{{dt.delBg}};color:{{dt.delColor}};font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:7px 10px;cursor:pointer;margin-left:auto">{{dt.delLabel}}</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{vForm}}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid #1a1b1c">
+    <div style="font-size:13px;font-weight:700;letter-spacing:2px">{{formTitle}}</div>
+    <div style="display:flex;gap:8px">
+      <button onClick="{{onCancel}}" style="border:1px solid #9a9d99;background:none;color:#5f6368;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:6px 10px;cursor:pointer">CANCEL</button>
+      <button onClick="{{onSave}}" style="border:1px solid #1a1b1c;background:#1a1b1c;color:#fff;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:6px 12px;cursor:pointer">SAVE</button>
+    </div>
+  </div>
+  <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}">
+    <div style="padding:9px 16px;border-bottom:1px solid #b42318;background:#fbeae7;color:#b42318;font:600 11px 'IBM Plex Mono',monospace">{{err}}</div>
+  </sc-if>
+  <div style="padding:6px 16px 20px 16px">
+    <div style="padding:14px 0 6px 0;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;border-bottom:1px solid #1a1b1c;margin-bottom:10px">IDENTITY</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">GENERIC NAME *</div><input value="{{f.generic}}" onChange="{{fs.generic}}" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">BRAND</div><input value="{{f.brand}}" onChange="{{fs.brand}}" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">STRENGTH * (mg / mcg / mEq / mL / units)</div><input value="{{f.strength}}" onChange="{{fs.strength}}" placeholder="25 mg" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">FORM</div><input value="{{f.form}}" onChange="{{fs.form}}" placeholder="tab" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">ROUTE</div><input value="{{f.route}}" onChange="{{fs.route}}" placeholder="PO" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">DRUG CLASS</div><input value="{{f.drugClass}}" onChange="{{fs.drugClass}}" placeholder="ACE inhibitor" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+    </div>
+    <div style="margin-top:10px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">INDICATION</div><input value="{{f.indication}}" onChange="{{fs.indication}}" placeholder="HTN" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+
+    <div style="padding:18px 0 6px 0;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;border-bottom:1px solid #1a1b1c;margin-bottom:10px">SIG &amp; SCHEDULE</div>
+    <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">SIG — AS WRITTEN ON LABEL *</div><input value="{{f.sig}}" onChange="{{fs.sig}}" placeholder="1 tab PO BID" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:10px">
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">DOSES / DAY *</div><input value="{{f.dosesPerDay}}" onChange="{{fs.dosesPerDay}}" inputMode="decimal" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">TIME OF DAY</div>
+        <div style="display:flex">
+          <sc-for list="{{slotBtns}}" as="b" hint-placeholder-count="4"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">TYPE</div><div style="display:flex"><sc-for list="{{segKind}}" as="b" hint-placeholder-count="2"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">FULFILLMENT</div><div style="display:flex"><sc-for list="{{segFulfil}}" as="b" hint-placeholder-count="2"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+    </div>
+
+    <div style="padding:18px 0 6px 0;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;border-bottom:1px solid #1a1b1c;margin-bottom:10px">SUPPLY</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">QTY DISPENSED *</div><input value="{{f.qty}}" onChange="{{fs.qty}}" inputMode="numeric" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">DATE LAST FILLED *</div><input type="date" value="{{f.filled}}" onChange="{{fs.filled}}" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:7px 8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">DAYS SUPPLY</div><input value="{{f.daysSupply}}" onChange="{{fs.daysSupply}}" inputMode="numeric" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">REFILLS REMAINING *</div><input value="{{f.refills}}" onChange="{{fs.refills}}" inputMode="numeric" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+    </div>
+
+    <div style="padding:18px 0 6px 0;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;border-bottom:1px solid #1a1b1c;margin-bottom:10px">RX SOURCE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">PRESCRIBER</div><input value="{{f.prescriber}}" onChange="{{fs.prescriber}}" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">PHARMACY</div><input value="{{f.pharmacy}}" onChange="{{fs.pharmacy}}" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+      <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">RX NUMBER</div><input value="{{f.rx}}" onChange="{{fs.rx}}" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace"></div>
+    </div>
+
+    <div style="padding:18px 0 6px 0;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;border-bottom:1px solid #1a1b1c;margin-bottom:10px">FLAGS — AFFECT ORDER-BY LEAD</div>
+    <div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">CONTROLLED SUBSTANCE SCHEDULE</div><div style="display:flex"><sc-for list="{{segSched}}" as="b" hint-placeholder-count="5"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+    <div style="margin-top:10px"><button onClick="{{onCold}}" style="{{coldStyle}}">{{coldLabel}}</button></div>
+    <div style="margin-top:10px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#5f6368;margin-bottom:4px">STATUS</div><div style="display:flex"><sc-for list="{{segStatus}}" as="b" hint-placeholder-count="3"><button onClick="{{b.onPick}}" style="{{b.style}}">{{b.label}}</button></sc-for></div></div>
+
+    <div style="padding:18px 0 6px 0;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#5f6368;border-bottom:1px solid #1a1b1c;margin-bottom:10px">NOTES</div>
+    <textarea value="{{f.notes}}" onChange="{{fs.notes}}" rows="3" style="width:100%;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:500 13px 'IBM Plex Mono',monospace;resize:vertical"></textarea>
+  </div>
+</sc-if>
+
+<sc-if value="{{vSettings}}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid #1a1b1c">
+    <div style="font-size:13px;font-weight:700;letter-spacing:2px">LEAD TIMES</div>
+    <button onClick="{{goDash}}" style="border:1px solid #1a1b1c;background:#1a1b1c;color:#fff;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1px;padding:6px 12px;cursor:pointer">DONE</button>
+  </div>
+  <div style="padding:8px 16px 24px 16px">
+    <sc-for list="{{setRows}}" as="s" hint-placeholder-count="5">
+      <div style="display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #d8d9d4">
+        <input value="{{s.val}}" onChange="{{s.onChange}}" inputMode="numeric" style="width:58px;flex-shrink:0;box-sizing:border-box;border:1px solid #9a9d99;background:#fff;padding:8px;font:600 15px 'IBM Plex Mono',monospace;text-align:center">
+        <div>
+          <div style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1px">{{s.label}}</div>
+          <div style="font-size:11.5px;color:#5f6368;margin-top:2px">{{s.note}}</div>
+        </div>
+      </div>
+    </sc-for>
+    <div style="margin-top:14px;font:500 11px 'IBM Plex Mono',monospace;color:#5f6368;line-height:1.6">ORDER-BY = RUN-OUT − LEAD.<br>0 REFILLS → RENEWAL LEAD APPLIES.<br>CONTROLLED / COLD-CHAIN DAYS ADD TO EITHER.</div>
+  </div>
+</sc-if>
+
+<div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;display:flex;border-top:2px solid #1a1b1c;background:#f7f7f4;z-index:10">
+  <button onClick="{{goDash}}" style="{{navListStyle}}">LIST</button>
+  <button onClick="{{goSched}}" style="{{navSchedStyle}}">SCHEDULE</button>
+  <button onClick="{{goAdd}}" style="{{navAddStyle}}">+ ADD</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:880},&quot;showBrand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;rosterOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alphabetical&quot;,&quot;days on hand&quot;,&quot;class&quot;],&quot;default&quot;:&quot;alphabetical&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;}}">
+class Component extends DCLogic {
+  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, data: this.boot() };
+
+  tmid() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  iso(d) { const p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  pd(s) { return new Date(s + 'T00:00:00'); }
+  MOS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  fd(d) { return String(d.getDate()).padStart(2, '0') + ' ' + this.MOS[d.getMonth()]; }
+  fdy(d) { return this.fd(d) + ' ' + d.getFullYear(); }
+
+  boot() {
+    try { const raw = localStorage.getItem('vamm.v1'); if (raw) { const d = JSON.parse(raw); if (d && d.meds) return d; } } catch (e) {}
+    const d = this.seed();
+    try { localStorage.setItem('vamm.v1', JSON.stringify(d)); } catch (e) {}
+    return d;
+  }
+
+  seed() {
+    const t = this.tmid(), DAY = 864e5;
+    const ago = n => this.iso(new Date(+t - n * DAY));
+    const M = o => Object.assign({ brand: '', form: 'tab', route: 'PO', daysSupply: 90, prescriber: '', pharmacy: 'VA CMOP (mail)', rx: '', indication: '', drugClass: '', status: 'active', notes: '', kind: 'maint', schedule: '', cold: false, fulfil: 'mail', slots: ['am'], history: [] }, o);
+    const H = (m, prev) => { m.history = [{ date: m.filled, event: 'Filled — qty ' + m.qty }, { date: ago(prev), event: 'Filled — qty ' + m.qty }]; return m; };
+    return {
+      settings: { lead: 10, ship: 6, renewLead: 21, ctrlExtra: 4, coldExtra: 3 },
+      doses: {},
+      meds: [
+        H(M({ id: 'm1', generic: 'carvedilol', brand: 'Coreg', strength: '25 mg', sig: '1 tab PO BID with food', dosesPerDay: 2, qty: 180, filled: ago(35), refills: 3, slots: ['am', 'pm'], drugClass: 'Non-selective β-blocker w/ α₁ blockade', indication: 'HFrEF 2/2 dilated cardiomyopathy', prescriber: 'Nguyen, T. — Cardiology', rx: '2718304', notes: 'Titrated from 12.5 mg BID 03/2026.' }), 125),
+        H(M({ id: 'm2', generic: 'cetirizine', brand: 'Zyrtec', strength: '10 mg', sig: '3 tabs (30 mg) PO daily', dosesPerDay: 3, qty: 270, filled: ago(86), refills: 2, slots: ['am'], drugClass: '2nd-gen H₁ antagonist', indication: 'Allergic rhinitis', prescriber: 'Ortiz, M. — Primary Care', rx: '2718311' }), 176),
+        H(M({ id: 'm3', generic: 'ivabradine', brand: 'Corlanor', strength: '5 mg', sig: '1 tab PO BID × 360 days', dosesPerDay: 2, qty: 180, filled: ago(72), refills: 0, slots: ['am', 'pm'], drugClass: 'Iƒ (HCN) channel inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718305', notes: 'Non-formulary — renewal goes through cardiology, allow extra time.' }), 162),
+        H(M({ id: 'm4', generic: 'empagliflozin', brand: 'Jardiance', strength: '10 mg', sig: '1 tab PO daily', dosesPerDay: 1, qty: 90, filled: ago(40), refills: 2, slots: ['am'], drugClass: 'SGLT2 inhibitor', indication: 'HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718306' }), 130),
+        H(M({ id: 'm5', generic: 'sacubitril-valsartan', brand: 'Entresto', strength: '97-103 mg', sig: '1 tab PO BID', dosesPerDay: 2, qty: 180, filled: ago(82), refills: 1, slots: ['am', 'pm'], drugClass: 'ARNI', indication: 'Chronic HFrEF', prescriber: 'Nguyen, T. — Cardiology', rx: '2718307' }), 172),
+        H(M({ id: 'm6', generic: 'venlafaxine ER', brand: 'Effexor XR', strength: '150 mg', form: 'cap SR 24h', sig: '2 caps (300 mg) PO QAM', dosesPerDay: 2, qty: 180, filled: ago(30), refills: 4, slots: ['am'], drugClass: 'SNRI', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718308' }), 120),
+        H(M({ id: 'm7', generic: 'bupropion SR', brand: 'Wellbutrin SR', strength: '150 mg', form: 'tab SR 12h', sig: '1 tab PO BID', dosesPerDay: 2, qty: 180, filled: ago(25), refills: 0, slots: ['am', 'pm'], drugClass: 'NDRI / aminoketone', indication: '—', prescriber: 'Patel, R. — Psychiatry', rx: '2718309' }), 115),
+        H(M({ id: 'm8', generic: 'furosemide', brand: 'Lasix', strength: '20 mg', sig: '1 tab PO daily PRN', dosesPerDay: 2, qty: 60, filled: ago(12), refills: 1, kind: 'prn', slots: [], drugClass: 'Loop diuretic', indication: 'Volume overload — PRN', prescriber: 'Nguyen, T. — Cardiology', rx: '2718310', daysSupply: 30, notes: 'Doses/day = 2 as budgeted burn rate, not sig max.' }), 42)
+      ]
+    };
+  }
+
+  persist(data) { try { localStorage.setItem('vamm.v1', JSON.stringify(data)); } catch (e) {} this.setState({ data: { ...data } }); }
+  num(v, d) { const n = parseFloat(v); return isFinite(n) ? n : d; }
+
+  calc(m) {
+    const s = this.state.data.settings, t = this.tmid(), DAY = 864e5;
+    const lead0 = this.num(s.lead, 10), ship = this.num(s.ship, 6), rlead0 = this.num(s.renewLead, 21);
+    const extra = (m.schedule ? this.num(s.ctrlExtra, 4) : 0) + (m.cold ? this.num(s.coldExtra, 3) : 0);
+    const dpd = Math.max(0.01, this.num(m.dosesPerDay, 1));
+    const elapsed = Math.max(0, Math.round((t - this.pd(m.filled)) / DAY));
+    const remaining = Math.max(0, this.num(m.qty, 0) - elapsed * dpd);
+    const doh = Math.floor(remaining / dpd);
+    const runOut = new Date(+t + doh * DAY);
+    const renewal = this.num(m.refills, 0) <= 0;
+    const lead = (renewal ? Math.max(lead0, rlead0) : lead0) + extra;
+    const orderBy = new Date(+runOut - lead * DAY);
+    const dto = Math.round((orderBy - t) / DAY);
+    const RED = '#b42318', AMB = '#b54708', IND = '#3538cd', INK = '#1a1b1c';
+    let tier;
+    if (doh <= 0) tier = { k: 'out', rank: 5, tag: 'OUT', c: RED };
+    else if (doh <= ship) tier = { k: 'overdue', rank: 4, tag: renewal ? 'OVERDUE·RENEW' : 'OVERDUE', c: RED };
+    else if (renewal && dto <= 0) tier = { k: 'renew', rank: 3, tag: 'RENEW NOW', c: IND };
+    else if (!renewal && dto <= 0) tier = { k: 'order', rank: 2, tag: 'ORDER NOW', c: AMB };
+    else if (renewal) tier = { k: 'norefill', rank: 1, tag: '0 RF', c: IND };
+    else tier = { k: 'ok', rank: 0, tag: '', c: INK };
+    const dohColor = tier.rank >= 2 ? tier.c : INK;
+    return { elapsed, remaining, doh, runOut, orderBy, dto, lead, extra, renewal, tier, dohColor };
+  }
+
+  expandSig(sig) {
+    const map = { PO: 'by mouth', SL: 'sublingual', SC: 'subcutaneous', IM: 'intramuscular', BID: 'twice daily', TID: 'three times daily', QID: 'four times daily', QHS: 'at bedtime', QAM: 'every morning', QD: 'daily', PRN: 'as needed', q6h: 'every 6 h', q8h: 'every 8 h', q12h: 'every 12 h' };
+    let out = sig, hit = false;
+    for (const k of Object.keys(map)) { const re = new RegExp('\\b' + k + '\\b', 'gi'); if (re.test(out)) { hit = true; out = out.replace(re, map[k]); } }
+    return hit ? out : '';
+  }
+
+  go(view, extra) { this.setState(Object.assign({ view, err: '', delArm: false }, extra || {})); }
+
+  markRefilled(id) {
+    const d = this.state.data, m = d.meds.find(x => x.id === id);
+    if (!m) return;
+    m.filled = this.iso(this.tmid());
+    m.refills = Math.max(0, this.num(m.refills, 0) - 1);
+    m.history = [{ date: m.filled, event: 'Filled — qty ' + m.qty + ' · ' + m.refills + ' RF left' }].concat(m.history || []);
+    this.persist(d);
+  }
+
+  setStatus(id, status) {
+    const d = this.state.data, m = d.meds.find(x => x.id === id);
+    if (!m) return; m.status = status;
+    m.history = [{ date: this.iso(this.tmid()), event: 'Status → ' + status.toUpperCase() }].concat(m.history || []);
+    this.persist(d);
+  }
+
+  blankForm() { return { generic: '', brand: '', strength: '', form: 'tab', route: 'PO', drugClass: '', indication: '', sig: '', dosesPerDay: '', kind: 'maint', slots: ['am'], qty: '', filled: this.iso(this.tmid()), daysSupply: '', refills: '', prescriber: '', pharmacy: 'VA CMOP (mail)', rx: '', schedule: '', fulfil: 'mail', cold: false, status: 'active', notes: '' }; }
+  med2form(m) { const f = {}; for (const k of Object.keys(this.blankForm())) f[k] = k === 'slots' ? (m.slots || []).slice() : k === 'cold' ? !!m.cold : String(m[k] == null ? '' : m[k]); return f; }
+  setF(k, v) { this.setState({ form: Object.assign({}, this.state.form, { [k]: v }), err: '' }); }
+
+  saveForm() {
+    const f = this.state.form;
+    const dpd = parseFloat(f.dosesPerDay), qty = parseFloat(f.qty);
+    let err = '';
+    if (!f.generic.trim()) err = 'Generic name required.';
+    else if (!f.strength.trim()) err = 'Strength required.';
+    else if (!/\d\s*(mg|mcg|meq|ml|unit|units|g|%)/i.test(f.strength)) err = 'Strength needs an explicit unit — mg, mcg, mEq, mL, units.';
+    else if (!f.sig.trim()) err = 'Sig required.';
+    else if (!(dpd > 0)) err = 'Doses/day must be > 0.';
+    else if (!(qty > 0)) err = 'Qty dispensed must be > 0.';
+    else if (!f.filled) err = 'Fill date required.';
+    if (err) { this.setState({ err }); return; }
+    const d = this.state.data;
+    const med = {
+      generic: f.generic.trim(), brand: f.brand.trim(), strength: f.strength.trim(), form: f.form.trim(), route: f.route.trim() || 'PO',
+      drugClass: f.drugClass.trim(), indication: f.indication.trim(), sig: f.sig.trim(), dosesPerDay: dpd, kind: f.kind, slots: f.slots,
+      qty: qty, filled: f.filled, daysSupply: parseFloat(f.daysSupply) || '', refills: Math.max(0, Math.floor(parseFloat(f.refills) || 0)),
+      prescriber: f.prescriber.trim(), pharmacy: f.pharmacy.trim(), rx: f.rx.trim(), schedule: f.schedule, fulfil: f.fulfil, cold: !!f.cold, status: f.status, notes: f.notes
+    };
+    let id = this.state.editId;
+    if (id) { const old = d.meds.find(x => x.id === id); Object.assign(old, med); }
+    else { id = 'm' + Date.now(); d.meds.push(Object.assign({ id, history: [{ date: f.filled, event: 'Filled — qty ' + qty }] }, med)); }
+    this.persist(d);
+    this.go('detail', { activeId: id, form: null, editId: null });
+  }
+
+  toggleDose(id, slot) {
+    const d = this.state.data, dk = this.iso(this.tmid());
+    d.doses[dk] = d.doses[dk] || {}; d.doses[dk][id] = d.doses[dk][id] || {};
+    d.doses[dk][id][slot] = !d.doses[dk][id][slot];
+    this.persist(d);
+  }
+
+  seg(on) { return "flex:1;padding:8px 2px;border:1px solid #1a1b1c;margin-left:-1px;cursor:pointer;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.5px;background:" + (on ? '#1a1b1c' : '#fff') + ';color:' + (on ? '#fff' : '#1a1b1c'); }
+
+  renderVals() {
+    const st = this.state, d = st.data, s = d.settings, t = this.tmid();
+    const VA = 'https://www.va.gov/my-health/medications/refill';
+    const showBrand = this.props.showBrand ?? true;
+    const rosterOrder = this.props.rosterOrder ?? 'alphabetical';
+    const brandP = m => showBrand && m.brand ? '(' + m.brand + ')' : '';
+    const act = d.meds.filter(m => m.status === 'active');
+    const cc = new Map(act.map(m => [m.id, this.calc(m)]));
+    const open = id => () => this.go('detail', { activeId: id });
+
+    // queue
+    const queue = act.filter(m => cc.get(m.id).tier.rank >= 2)
+      .sort((a, b) => cc.get(b.id).tier.rank - cc.get(a.id).tier.rank || cc.get(a.id).doh - cc.get(b.id).doh);
+    const qRows = queue.map(m => {
+      const c = cc.get(m.id);
+      const verb = c.renewal ? 'RENEW BY' : 'ORDER BY';
+      const when = c.dto < 0 ? Math.abs(c.dto) + ' D PAST' : c.dto === 0 ? 'DUE TODAY' : 'IN ' + c.dto + ' D';
+      return {
+        tag: c.tier.tag, tagBg: c.tier.c, name: m.generic, brandP: brandP(m),
+        line2: verb + ' ' + this.fd(c.orderBy) + ' — ' + when + ' · ' + this.num(m.refills, 0) + ' RF' + (c.renewal ? ' — PRESCRIBER ACTION' : ''),
+        doh: c.doh, dohColor: c.dohColor, vaUrl: VA, vaVerb: c.renewal ? 'VA — REQUEST RENEWAL' : 'VA REFILL',
+        onOpen: open(m.id), onRefill: () => this.markRefilled(m.id)
+      };
+    });
+    const renewQuiet = act.filter(m => cc.get(m.id).tier.k === 'norefill').map(m => m.generic);
+
+    // next order-by (for all-clear line)
+    let next = null;
+    for (const m of act) { const c = cc.get(m.id); if (!next || c.orderBy < next.c.orderBy) next = { m, c }; }
+    const nextLine = next ? 'NEXT ORDER-BY ' + this.fd(next.c.orderBy) + ' (' + next.m.generic.toUpperCase() + ')' : 'NO ACTIVE MEDS';
+
+    // chips
+    const classes = [...new Set(act.map(m => m.drugClass).filter(Boolean))];
+    const chipS = on => "flex-shrink:0;padding:5px 9px;border:1px solid " + (on ? '#1a1b1c' : '#9a9d99') + ";cursor:pointer;font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.5px;white-space:nowrap;background:" + (on ? '#1a1b1c' : '#fff') + ';color:' + (on ? '#fff' : '#5f6368');
+    const chips = [{ label: 'ALL CLASSES', on: !st.filter, onPick: () => this.setState({ filter: '' }), style: chipS(!st.filter) }]
+      .concat(classes.map(cl => ({ label: cl.toUpperCase(), on: st.filter === cl, onPick: () => this.setState({ filter: st.filter === cl ? '' : cl }), style: chipS(st.filter === cl) })));
+
+    // roster
+    let roster = act.filter(m => !st.filter || m.drugClass === st.filter);
+    if (rosterOrder === 'days on hand') roster = roster.slice().sort((a, b) => cc.get(a.id).doh - cc.get(b.id).doh);
+    else if (rosterOrder === 'class') roster = roster.slice().sort((a, b) => (a.drugClass || '').localeCompare(b.drugClass || '') || a.generic.localeCompare(b.generic));
+    else roster = roster.slice().sort((a, b) => a.generic.localeCompare(b.generic));
+    const rRows = roster.map(m => {
+      const c = cc.get(m.id);
+      return {
+        name: m.generic, brandP: brandP(m),
+        meta1: m.strength + ' ' + m.form + ' · ' + m.sig,
+        meta2: [m.drugClass, m.indication].filter(Boolean).join(' · '),
+        doh: c.doh, dohColor: c.dohColor,
+        showTag: c.tier.rank > 0, tag: c.tier.rank >= 2 ? c.tier.tag.split(' ')[0].split('·')[0] : c.tier.tag, tagBg: c.tier.c,
+        isPrn: m.kind === 'prn' && c.tier.rank === 0, onOpen: open(m.id)
+      };
+    });
+
+    const inact = d.meds.filter(m => m.status !== 'active');
+    const iRows = inact.map(m => ({ name: m.generic, brandP: brandP(m), statusLabel: m.status === 'hold' ? 'ON HOLD' : 'DISCONTINUED', onOpen: open(m.id) }));
+
+    // detail
+    let dt = {};
+    const dm = d.meds.find(x => x.id === st.activeId);
+    if (dm && st.view === 'detail') {
+      const c = this.calc(dm);
+      const leadBits = [(c.renewal ? Math.max(this.num(s.lead, 10), this.num(s.renewLead, 21)) + ' d ' + (c.renewal ? 'renewal' : 'base') : this.num(s.lead, 10) + ' d base')];
+      if (dm.schedule) leadBits.push('+' + this.num(s.ctrlExtra, 4) + ' d ' + dm.schedule);
+      if (dm.cold) leadBits.push('+' + this.num(s.coldExtra, 3) + ' d cold chain');
+      const plain = this.expandSig(dm.sig);
+      dt = {
+        name: dm.generic, brandP: brandP(dm),
+        tierTag: c.tier.rank > 0 ? c.tier.tag : (dm.status === 'active' ? 'OK' : dm.status.toUpperCase()),
+        tierBg: c.tier.rank > 0 ? c.tier.c : '#5f6368',
+        remaining: Math.round(c.remaining * 10) / 10, remUnit: (dm.form || 'units').toUpperCase(),
+        doh: c.doh, dohColor: c.dohColor, runOut: this.fd(c.runOut), runOutYr: c.runOut.getFullYear(),
+        orderByLabel: c.renewal ? 'RENEW BY' : 'ORDER BY', orderBy: this.fdy(c.orderBy),
+        leadNote: 'lead ' + c.lead + ' d (' + leadBits.join(' ') + ')',
+        vaUrl: VA, vaVerb: c.renewal ? 'RENEWAL' : 'REFILL',
+        hasSigPlain: !!plain, sigPlain: plain,
+        fields: [
+          ['Strength', dm.strength + ' ' + dm.form], ['Route', dm.route], ['Sig', dm.sig],
+          ['Doses/day', String(dm.dosesPerDay)], ['Class', dm.drugClass || '—'], ['Indication', dm.indication || '—'],
+          ['Type', dm.kind === 'prn' ? 'PRN' : 'Maintenance'], ['Schedule', dm.schedule || '— (not controlled)'],
+          ['Qty dispensed', String(dm.qty)], ['Date filled', this.fdy(this.pd(dm.filled))],
+          ['Days supply', dm.daysSupply ? String(dm.daysSupply) : '—'],
+          ['Refills left', String(this.num(dm.refills, 0)) + (c.renewal ? ' — renewal required' : '')],
+          ['Fulfillment', dm.fulfil === 'mail' ? 'Mail order' : 'Window pickup'],
+          ['Cold chain', dm.cold ? 'Yes — refrigerate' : 'No'],
+          ['Prescriber', dm.prescriber || '—'], ['Pharmacy', dm.pharmacy || '—'], ['Rx #', dm.rx || '—'],
+          ['Notes', dm.notes || '—']
+        ].map(x => ({ k: x[0], v: x[1] })),
+        hist: (dm.history || []).map(h => ({ date: this.fdy(this.pd(h.date)), event: h.event })),
+        holdLabel: dm.status === 'hold' ? 'RESUME' : 'PLACE ON HOLD',
+        dcLabel: dm.status === 'dc' ? 'REACTIVATE' : 'DISCONTINUE',
+        delLabel: st.delArm ? 'CONFIRM DELETE' : 'DELETE',
+        delBg: st.delArm ? '#b42318' : 'none', delColor: st.delArm ? '#fff' : '#b42318',
+        onBack: () => this.go('dash', { activeId: null }),
+        onEdit: () => this.go('form', { form: this.med2form(dm), editId: dm.id }),
+        onRefill: () => this.markRefilled(dm.id),
+        onHold: () => this.setStatus(dm.id, dm.status === 'hold' ? 'active' : 'hold'),
+        onDc: () => this.setStatus(dm.id, dm.status === 'dc' ? 'active' : 'dc'),
+        onDel: () => {
+          if (!st.delArm) { this.setState({ delArm: true }); return; }
+          const data = this.state.data; data.meds = data.meds.filter(x => x.id !== dm.id);
+          this.persist(data); this.go('dash', { activeId: null });
+        }
+      };
+    }
+
+    // schedule
+    const dk = this.iso(t);
+    const slotDefs = [['am', 'MORNING'], ['mid', 'MIDDAY'], ['pm', 'EVENING'], ['hs', 'BEDTIME']];
+    const schedGroups = [];
+    for (const [slot, label] of slotDefs) {
+      const rows = act.filter(m => m.kind !== 'prn' && (m.slots || []).includes(slot)).map(m => {
+        const on = !!(d.doses[dk] && d.doses[dk][m.id] && d.doses[dk][m.id][slot]);
+        return { name: m.generic, brandP: brandP(m), sub: m.strength + ' ' + m.form + ' · ' + m.sig, mark: on ? '✓' : '', boxBg: on ? '#1a1b1c' : '#fff', onToggle: () => this.toggleDose(m.id, slot) };
+      });
+      if (rows.length) schedGroups.push({ label, rows });
+    }
+    const prnRows = act.filter(m => m.kind === 'prn').map(m => {
+      const on = !!(d.doses[dk] && d.doses[dk][m.id] && d.doses[dk][m.id].prn);
+      return { name: m.generic, brandP: brandP(m), sub: m.strength + ' ' + m.form + ' · ' + m.sig, mark: on ? '✓' : '', boxBg: on ? '#1a1b1c' : '#fff', onToggle: () => this.toggleDose(m.id, 'prn') };
+    });
+    if (prnRows.length) schedGroups.push({ label: 'PRN', rows: prnRows });
+
+    // form
+    const f = st.form || {};
+    const fs = {};
+    for (const k of ['generic', 'brand', 'strength', 'form', 'route', 'drugClass', 'indication', 'sig', 'dosesPerDay', 'qty', 'filled', 'daysSupply', 'refills', 'prescriber', 'pharmacy', 'rx', 'notes']) fs[k] = e => this.setF(k, e.target.value);
+    const slots = f.slots || [];
+    const slotBtns = slotDefs.map(([slot, label]) => ({
+      label: label.slice(0, 4), style: this.seg(slots.includes(slot)),
+      onPick: () => this.setF('slots', slots.includes(slot) ? slots.filter(x => x !== slot) : slots.concat(slot))
+    }));
+    const segOf = (key, opts) => opts.map(([val, label]) => ({ label, style: this.seg(f[key] === val), onPick: () => this.setF(key, val) }));
+    const segKind = segOf('kind', [['maint', 'MAINT'], ['prn', 'PRN']]);
+    const segFulfil = segOf('fulfil', [['mail', 'MAIL'], ['window', 'WINDOW']]);
+    const segSched = segOf('schedule', [['', 'NONE'], ['C-II', 'C-II'], ['C-III', 'C-III'], ['C-IV', 'C-IV'], ['C-V', 'C-V']]);
+    const segStatus = segOf('status', [['active', 'ACTIVE'], ['hold', 'ON HOLD'], ['dc', 'DISCONTINUED']]);
+
+    // settings
+    const setDefs = [
+      ['lead', 'MAIL-ORDER LEAD (D)', 'Order-by = run-out − this. VA guidance: 10 days.'],
+      ['renewLead', 'RENEWAL LEAD (D)', 'Used when 0 refills remain — prescriber must act.'],
+      ['ctrlExtra', 'CONTROLLED +D', 'Added for any C-II–C-V med.'],
+      ['coldExtra', 'COLD CHAIN +D', 'Added for refrigerated meds.'],
+      ['ship', 'OVERDUE THRESHOLD (D)', 'At or below this many days on hand, mail likely arrives after run-out.']
+    ];
+    const setRows = setDefs.map(([k, label, note]) => ({
+      val: String(s[k]), label, note,
+      onChange: e => { const data = this.state.data; data.settings[k] = e.target.value; this.persist(data); }
+    }));
+
+    const navS = on => "flex:1;padding:13px 0;border:none;cursor:pointer;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;background:" + (on ? '#1a1b1c' : 'transparent') + ';color:' + (on ? '#fff' : '#1a1b1c');
+    const wd = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][t.getDay()];
+
+    return {
+      vDash: st.view === 'dash', vSched: st.view === 'sched', vDetail: st.view === 'detail', vForm: st.view === 'form', vSettings: st.view === 'settings',
+      todayStr: this.fd(t) + ' ' + t.getFullYear(), todayFull: wd + ' ' + this.fdy(t).toUpperCase(),
+      countLine: act.length + ' ACTIVE · ' + qRows.length + ' NEED ACTION',
+      goDash: () => this.go('dash'), goSched: () => this.go('sched'), goSettings: () => this.go('settings'),
+      goAdd: () => this.go('form', { form: this.blankForm(), editId: null }),
+      hasQueue: qRows.length > 0, actionCount: qRows.length, qRows,
+      allClear: qRows.length === 0, nextLine,
+      hasRenewNote: renewQuiet.length > 0, renewNote: renewQuiet.join(', '),
+      chips, rRows,
+      hasInactive: inact.length > 0, showInactive: st.showInactive,
+      inactiveLabel: (st.showInactive ? '▾' : '▸') + ' ON HOLD / DISCONTINUED (' + inact.length + ')',
+      onToggleInactive: () => this.setState({ showInactive: !st.showInactive }), iRows,
+      dt, schedGroups,
+      f, fs, slotBtns, segKind, segFulfil, segSched, segStatus,
+      coldStyle: this.seg(!!f.cold) + ';flex:none;padding:8px 14px', coldLabel: f.cold ? 'COLD CHAIN — YES' : 'COLD CHAIN — NO',
+      onCold: () => this.setF('cold', !f.cold),
+      formTitle: st.editId ? 'EDIT — ' + (f.generic || '').toUpperCase() : 'ADD MEDICATION',
+      hasErr: !!st.err, err: st.err,
+      onSave: () => this.saveForm(), onCancel: () => this.go(st.editId ? 'detail' : 'dash', { form: null, editId: null }),
+      setRows,
+      navListStyle: navS(st.view === 'dash' || st.view === 'detail' || st.view === 'settings'),
+      navSchedStyle: navS(st.view === 'sched'),
+      navAddStyle: navS(st.view === 'form')
+    };
+  }
+}
+</script>
+</body>
+</html>
