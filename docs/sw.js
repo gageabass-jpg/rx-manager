@@ -1,9 +1,12 @@
-/* Rx Manager — offline service worker (v3: sidebar layout, two-user, lead times)
-   Caches the app shell, the design-canvas runtime (support.js), the vendored
-   React/ReactDOM/Babel, the local IBM Plex Mono fonts, and icons so the app
-   runs with NO network after the first load.
-   Bump CACHE_VERSION whenever you redeploy so devices pick up the new build. */
-const CACHE_VERSION = 'rx-manager-v5';
+/* Rx Manager — offline service worker
+   Strategy:
+   - NAVIGATIONS (the HTML page): network-first. Always try the network so a new
+     deploy shows up immediately when online; fall back to cache when offline.
+     This is what fixes "the iPad won't reflect my changes".
+   - STATIC ASSETS (js/fonts/icons): cache-first (fast, and they rarely change);
+     refreshed in the background when online.
+   Bump CACHE_VERSION on every deploy so old caches are cleared on activate. */
+const CACHE_VERSION = 'rx-manager-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -42,22 +45,43 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
       .then((cache) => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting())      // new SW takes over ASAP
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())    // control open pages immediately
   );
 });
 
-/* Cache-first for instant loads + offline; network refreshes the cache when online. */
+function isNavigation(req) {
+  return req.mode === 'navigate' ||
+    (req.method === 'GET' && (req.headers.get('accept') || '').includes('text/html'));
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  if (isNavigation(req)) {
+    // Network-first: fresh page when online, cached page when offline.
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put('./index.html', copy));
+          return res;
+        })
+        .catch(() => caches.match('./index.html', { ignoreSearch: true })
+          .then((c) => c || caches.match('./', { ignoreSearch: true })))
+    );
+    return;
+  }
+
+  // Static assets: cache-first, refresh in background.
   event.respondWith(
     caches.match(req, { ignoreSearch: true }).then((cached) => {
       const network = fetch(req).then((res) => {

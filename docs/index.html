@@ -27,8 +27,16 @@ window.__resources = {
 <!-- Offline support: cache the app shell + vendored runtime -->
 <script>
 if ('serviceWorker' in navigator) {
+  // When a new service worker takes control, reload once so the fresh version shows.
+  var __reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (__reloaded) return; __reloaded = true; window.location.reload();
+  });
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function (e) {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      reg.update();                                  // check for a new version on every launch
+      setInterval(function () { reg.update(); }, 60 * 60 * 1000);
+    }).catch(function (e) {
       console.warn('[pwa] service worker registration failed:', e);
     });
   });
