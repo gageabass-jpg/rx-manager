@@ -84,11 +84,6 @@ video{display:block}
       <div style="font-size:16px;font-weight:700;letter-spacing:2px">MEDICATION LIST</div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8fa3ad;margin-top:4px">{{todayStr}} · {{countLine}}</div>
     </div>
-    <button onClick="{{onProfile}}" style="position:relative;display:flex;flex-shrink:0;border:2px solid #4d6272;border-radius:9px;background:#0d161d;padding:3px;cursor:pointer;min-height:52px">
-      <div style="position:absolute;top:3px;bottom:3px;left:{{profThumbLeft}};width:calc(50% - 3px);background:#0e7490;border-radius:6px;transition:left .2s ease"></div>
-      <div style="position:relative;width:92px;display:flex;align-items:center;justify-content:center;font:700 12px 'IBM Plex Mono',monospace;letter-spacing:1px;transform:translateY(2px);color:{{profColorA}}">GAGE</div>
-      <div style="position:relative;width:92px;display:flex;align-items:center;justify-content:center;font:700 12px 'IBM Plex Mono',monospace;letter-spacing:1px;transform:translateY(2px);color:{{profColorB}}">KAYLENE</div>
-    </button>
   </div>
 
   <sc-if value="{{hasQueue}}" hint-placeholder-val="{{ true }}">
@@ -409,7 +404,7 @@ video{display:block}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:600},&quot;showBrand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;rosterOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alphabetical&quot;,&quot;days on hand&quot;,&quot;class&quot;],&quot;default&quot;:&quot;alphabetical&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 class Component extends DCLogic {
-  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, profile: (typeof localStorage !== 'undefined' && localStorage.getItem('vamm.profile')) || 'me', camOn: false, camErr: false, capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
+  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, profile: 'me', camOn: false, camErr: false, capEdit: null, capMsg: 'CENTER THE LABEL IN THE FRAME', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
   vidRef = React.createRef();
   timers = [];
 
