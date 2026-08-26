@@ -3,7 +3,7 @@
    React/ReactDOM/Babel, the local IBM Plex Mono fonts, and icons so the app
    runs with NO network after the first load.
    Bump CACHE_VERSION whenever you redeploy so devices pick up the new build. */
-const CACHE_VERSION = 'rx-manager-v3';
+const CACHE_VERSION = 'rx-manager-v4';
 const ASSETS = [
   './',
   './index.html',
