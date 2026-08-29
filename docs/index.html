@@ -121,8 +121,9 @@ video{display:block}
       <button onClick="{{c.onPick}}" style="{{c.style}}">{{c.label}}</button>
     </sc-for>
   </div>
-  <div style="display:flex;justify-content:space-between;background:#334552;color:#fff;padding:8px 20px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1.5px">
-    <div>MEDICATION / SIG / CLASS</div><div>DAYS ON HAND</div>
+  <div style="display:flex;justify-content:space-between;align-items:stretch;background:#334552;color:#fff">
+    <button onClick="{{onSortName}}" style="{{sortNameStyle}}">MEDICATION / SIG / CLASS{{sortNameArrow}}</button>
+    <button onClick="{{onSortDoh}}" style="{{sortDohStyle}}">DAYS ON HAND{{sortDohArrow}}</button>
   </div>
   <sc-for list="{{rRows}}" as="r" hint-placeholder-count="6">
     <div onClick="{{r.onOpen}}" style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid #c3cbd1;cursor:pointer;background:{{r.rowBg}};min-height:60px;box-sizing:border-box">
@@ -407,7 +408,7 @@ video{display:block}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:600},&quot;showBrand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;rosterOrder&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alphabetical&quot;,&quot;days on hand&quot;,&quot;class&quot;],&quot;default&quot;:&quot;alphabetical&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 class Component extends DCLogic {
-  state = { view: 'dash', activeId: null, filter: '', showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, camOn: false, camErr: false, camScanning: false, capEdit: null, capMsg: 'POINT AT THE LABEL AND TAP SCAN', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
+  state = { view: 'dash', activeId: null, filter: '', sort: null, showInactive: false, form: null, editId: null, err: '', delArm: false, privacy: false, camOn: false, camErr: false, camScanning: false, capEdit: null, capMsg: 'POINT AT THE LABEL AND TAP SCAN', wide: (typeof window !== 'undefined' ? window.innerWidth >= 860 : true), data: this.boot() };
   vidRef = React.createRef();
   timers = [];
 
@@ -493,6 +494,16 @@ class Component extends DCLogic {
   }
 
   go(view, extra) { if (this.state.view === 'capture' && view !== 'capture') this.stopCam(); this.setState(Object.assign({ view, err: '', delArm: false }, extra || {})); }
+
+  // Column-header sort: click cycles ascending -> descending -> off (default order).
+  cycleSort(key) {
+    const s = this.state.sort;
+    let next;
+    if (!s || s.key !== key) next = { key, dir: 'asc' };
+    else if (s.dir === 'asc') next = { key, dir: 'desc' };
+    else next = null;
+    this.setState({ sort: next });
+  }
 
   capDefs() {
     return [
@@ -731,10 +742,15 @@ class Component extends DCLogic {
     const chips = [{ label: 'ALL CLASSES', on: !st.filter, onPick: () => this.setState({ filter: '' }), style: chipS(!st.filter) }]
       .concat(classes.map(cl => ({ label: cl.toUpperCase(), on: st.filter === cl, onPick: () => this.setState({ filter: st.filter === cl ? '' : cl }), style: chipS(st.filter === cl) })));
 
-    let roster = act.filter(m => !st.filter || m.drugClass === st.filter);
-    if (rosterOrder === 'days on hand') roster = roster.slice().sort((a, b) => cc.get(a.id).doh - cc.get(b.id).doh);
-    else if (rosterOrder === 'class') roster = roster.slice().sort((a, b) => (a.drugClass || '').localeCompare(b.drugClass || '') || a.generic.localeCompare(b.generic));
-    else roster = roster.slice().sort((a, b) => a.generic.localeCompare(b.generic));
+    let roster = act.filter(m => !st.filter || m.drugClass === st.filter).slice();
+    const byName = (a, b) => a.generic.localeCompare(b.generic);
+    const byDoh = (a, b) => cc.get(a.id).doh - cc.get(b.id).doh;
+    const so = st.sort;
+    if (so && so.key === 'name') { const s = so.dir === 'desc' ? -1 : 1; roster.sort((a, b) => byName(a, b) * s); }
+    else if (so && so.key === 'doh') { const s = so.dir === 'desc' ? -1 : 1; roster.sort((a, b) => (byDoh(a, b) || byName(a, b)) * s); }
+    else if (rosterOrder === 'days on hand') roster.sort(byDoh);
+    else if (rosterOrder === 'class') roster.sort((a, b) => (a.drugClass || '').localeCompare(b.drugClass || '') || byName(a, b));
+    else roster.sort(byName);
     const rRows = roster.map((m, i) => {
       const c = cc.get(m.id);
       return {
@@ -878,6 +894,11 @@ class Component extends DCLogic {
       allClear: qRows.length === 0, nextLine,
       hasRenewNote: renewQuiet.length > 0, renewNote: renewQuiet.join(', '),
       chips, rRows,
+      onSortName: () => this.cycleSort('name'), onSortDoh: () => this.cycleSort('doh'),
+      sortNameArrow: (st.sort && st.sort.key === 'name') ? (st.sort.dir === 'asc' ? ' ↑' : ' ↓') : '',
+      sortDohArrow: (st.sort && st.sort.key === 'doh') ? (st.sort.dir === 'asc' ? ' ↑' : ' ↓') : '',
+      sortNameStyle: "flex:1 1 auto;min-width:0;border:none;background:none;cursor:pointer;padding:10px 20px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1.5px;white-space:nowrap;text-align:left;color:" + ((st.sort && st.sort.key === 'name') ? '#fff;text-decoration:underline;text-underline-offset:3px' : '#9fb0bd'),
+      sortDohStyle: "flex:0 0 auto;border:none;background:none;cursor:pointer;padding:10px 20px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1.5px;white-space:nowrap;text-align:right;color:" + ((st.sort && st.sort.key === 'doh') ? '#fff;text-decoration:underline;text-underline-offset:3px' : '#9fb0bd'),
       hasInactive: inact.length > 0, showInactive: st.showInactive,
       inactiveLabel: (st.showInactive ? '▾' : '▸') + ' ON HOLD / DISCONTINUED (' + inact.length + ')',
       onToggleInactive: () => this.setState({ showInactive: !st.showInactive }), iRows,
