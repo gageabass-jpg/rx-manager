@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rx Manager — Text Reminder Sign-Up</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="apple-touch-icon.png">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#16232e;color:#e7eef1;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;line-height:1.5;
+       display:flex;justify-content:center;padding:32px 16px 64px}
+  .card{width:100%;max-width:560px}
+  .brand{font:700 13px ui-monospace,monospace;letter-spacing:2px;color:#8fa3ad}
+  h1{font-size:26px;margin:6px 0 4px}
+  .sub{color:#9fb0bd;margin:0 0 24px}
+  .box{background:#0d161d;border:1px solid #33465a;border-radius:12px;padding:20px}
+  label.fld{display:block;font:600 12px ui-monospace,monospace;letter-spacing:1px;color:#8fa3ad;margin-bottom:8px}
+  input[type=tel]{width:100%;background:#16232e;border:2px solid #4d6272;border-radius:8px;color:#fff;
+       font:600 20px ui-monospace,monospace;padding:14px;letter-spacing:1px}
+  input[type=tel]:focus{outline:none;border-color:#0e7490}
+  .consent{display:flex;gap:12px;align-items:flex-start;margin:20px 0 4px;font-size:14px;color:#cfd9de}
+  .consent input{margin-top:3px;width:20px;height:20px;flex-shrink:0}
+  button{margin-top:20px;width:100%;border:none;border-radius:9px;background:#0e7490;color:#fff;
+       font:700 15px ui-monospace,monospace;letter-spacing:1.5px;padding:16px;cursor:pointer}
+  button:disabled{background:#3a4a57;color:#8fa3ad;cursor:not-allowed}
+  .msg{margin-top:14px;font:600 13px ui-monospace,monospace;min-height:18px}
+  .ok{color:#3fb56b}.err{color:#ff8a80}
+  .fine{margin-top:26px;font-size:12px;color:#8fa3ad;line-height:1.7}
+  .fine b{color:#cfd9de}
+  a{color:#5bb7cf}
+  .done{display:none;background:#0d161d;border:1px solid #2f5d3f;border-radius:12px;padding:24px;text-align:center}
+  .done h2{color:#3fb56b;margin:0 0 8px;font-size:20px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">RX MANAGER</div>
+    <h1>Medication refill reminders by text</h1>
+    <p class="sub">Get a text when one of your medications is due to reorder, with a link to refill.</p>
+
+    <div class="box" id="form">
+      <label class="fld" for="phone">YOUR MOBILE NUMBER</label>
+      <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-1234">
+
+      <label class="consent">
+        <input type="checkbox" id="consent">
+        <span id="consentText">By checking this box and providing my mobile number, I agree to receive recurring
+        automated medication refill reminder text messages from Rx Manager at the number provided.
+        Consent is not a condition of any purchase. Message frequency varies. Message and data rates may apply.
+        Reply STOP to unsubscribe or HELP for help.</span>
+      </label>
+
+      <button id="submit" disabled>ENABLE TEXT REMINDERS</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="done" id="done">
+      <h2>✓ You're signed up</h2>
+      <p id="doneMsg">Reminders will go to your number when a medication is due to reorder.</p>
+    </div>
+
+    <div class="fine">
+      <b>Program:</b> Rx Manager refill reminders.<br>
+      <b>What you'll get:</b> automated reminder texts when a medication reaches its reorder date, including a refill link.<br>
+      <b>Frequency:</b> varies — only when a medication is due (typically a few times a month).<br>
+      <b>Msg &amp; data rates may apply.</b> Reply <b>STOP</b> to cancel, <b>HELP</b> for help.<br>
+      See our <a href="privacy.html">Privacy Policy</a> and <a href="terms.html">Messaging Terms</a>.<br>
+      Contact: gage.a.bass@gmail.com
+    </div>
+  </div>
+
+<script>
+  var CFG = {
+    url: 'https://dmznzmtbtlxlssffjqvi.supabase.co/functions/v1/rx-optin',
+    key: 'sb_publishable_6DEaXZIAtw2Y1VeXPkXkYA_4Xz-qUQQ'
+  };
+  var phone = document.getElementById('phone');
+  var consent = document.getElementById('consent');
+  var submit = document.getElementById('submit');
+  var msg = document.getElementById('msg');
+  function refresh(){ submit.disabled = !(consent.checked && phone.value.replace(/\D/g,'').length >= 10); }
+  phone.addEventListener('input', refresh);
+  consent.addEventListener('change', refresh);
+  submit.addEventListener('click', function(){
+    submit.disabled = true; msg.className = 'msg'; msg.textContent = 'Saving…';
+    fetch(CFG.url, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': CFG.key, 'Authorization':'Bearer '+CFG.key },
+      body: JSON.stringify({
+        phone: phone.value,
+        consent: true,
+        consent_text: document.getElementById('consentText').textContent.trim(),
+        ua: navigator.userAgent
+      })
+    }).then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(res){
+        if (!res.ok) { msg.className='msg err'; msg.textContent = res.j.error || 'Something went wrong.'; submit.disabled=false; return; }
+        document.getElementById('form').style.display='none';
+        document.getElementById('done').style.display='block';
+        document.getElementById('doneMsg').textContent = 'Reminders will go to ' + res.j.phone + ' when a medication is due to reorder. Reply STOP anytime to cancel.';
+      })
+      .catch(function(){ msg.className='msg err'; msg.textContent='Network error — try again.'; submit.disabled=false; });
+  });
+</script>
+</body>
+</html>
