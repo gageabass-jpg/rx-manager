@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rx Manager — Text Reminder Opt-In Demonstration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="apple-touch-icon.png">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#16232e;color:#e7eef1;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;line-height:1.55;
+       display:flex;justify-content:center;padding:32px 16px 64px}
+  .card{width:100%;max-width:760px}
+  .brand{font:700 13px ui-monospace,monospace;letter-spacing:2px;color:#8fa3ad}
+  h1{font-size:24px;margin:6px 0 4px}
+  .sub{color:#9fb0bd;margin:0 0 22px}
+  video{width:100%;border:1px solid #33465a;border-radius:12px;background:#000;display:block}
+  .steps{background:#0d161d;border:1px solid #33465a;border-radius:12px;padding:18px 20px;margin-top:22px}
+  .steps h2{font-size:14px;letter-spacing:1px;color:#8fa3ad;margin:0 0 10px;text-transform:uppercase;font-family:ui-monospace,monospace}
+  ol{margin:0;padding-left:20px}
+  li{margin:6px 0}
+  .fine{margin-top:22px;font-size:13px;color:#8fa3ad;line-height:1.7}
+  a{color:#5bb7cf}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">RX MANAGER</div>
+    <h1>Text reminder opt-in — demonstration</h1>
+    <p class="sub">A recording of how a user consents to SMS medication refill reminders in the Rx Manager app. Text reminders are optional; the app works fully without them.</p>
+
+    <video controls preload="metadata" playsinline>
+      <source src="optin-demo.mp4" type="video/mp4">
+      Your browser can't play this video. <a href="optin-demo.mp4">Download it here.</a>
+    </video>
+
+    <div class="steps">
+      <h2>What the recording shows</h2>
+      <ol>
+        <li>Opening the Rx Manager app and going to <b>Settings</b>.</li>
+        <li>Tapping <b>Enable text reminders</b>, which opens the opt-in page.</li>
+        <li>Entering a mobile number and checking the consent box, which is <b>unchecked by default</b>.</li>
+        <li>The consent disclosure (recurring automated reminders, message frequency varies, msg &amp; data rates may apply, Reply STOP to cancel / HELP for help).</li>
+        <li>Submitting to enable reminders.</li>
+      </ol>
+    </div>
+
+    <div class="fine">
+      Live opt-in page: <a href="optin.html">rxmanager.us/optin.html</a> (no login required).<br>
+      <a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Messaging Terms</a> &middot; Contact: support@rxmanager.us
+    </div>
+  </div>
+</body>
+</html>
