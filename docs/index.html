@@ -457,9 +457,45 @@ class Component extends DCLogic {
 
   boot() {
     const key = this.dataKey();
-    try { const raw = localStorage.getItem(key); if (raw) { const d = JSON.parse(raw); if (d && d.meds) return d; } } catch (e) {}
-    const d = this.seed();
+    let d = null;
+    try { const raw = localStorage.getItem(key); if (raw) { const p = JSON.parse(raw); if (p && p.meds) d = p; } } catch (e) {}
+    if (!d) d = this.seed();
+    this.applyVA(d);
     try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
+    return d;
+  }
+
+  // VA refill-status update (27 SEP 2026). Runs once per device (d.vaSync).
+  // Sets sig / doses / refills to match VA and adds the refill status to notes.
+  // It does NOT change qty or filled (those hold the on-hand count).
+  get VA() { return {
+    id: '2026-09-27',
+    meds: [
+      { match: 'carvedilol', set: { refills: 0 }, status: 'Active · refill shipped 23 SEP 2026 · 0 refills left — request renewal' },
+      { match: 'eplerenone', set: { refills: 2, sig: '1 tab PO daily', dosesPerDay: 1 }, strip: /\s*VERIFY[^]*$/, status: 'Active · refill requested and processed, not shipped yet · 2 refills left' },
+      { match: 'venlafaxine', set: { refills: 1, sig: '2 caps (300 mg) PO daily with food', dosesPerDay: 2 }, status: 'Active · refill shipped 23 SEP 2026 · 1 refill left' },
+      { match: 'cetirizine', set: { pharmacy: 'OTC (self-purchased)', fulfil: 'window', refills: 99 }, status: 'OTC, bought by me · VA lists as Non-VA and does not fill it · refills set to 99 so no renewal alert' },
+      { match: 'bupropion', set: { generic: 'bupropion XL', brand: 'Wellbutrin XL', form: 'tab ER 24h', sig: '1 tab PO daily', dosesPerDay: 1, slots: ['am'], refills: 0 }, status: 'Refill in process · VA expects to fill 09 OCT 2026 · last refill (0 left after this)' },
+      { match: 'empagliflozin', set: { refills: 2, sig: '1 tab PO QAM', dosesPerDay: 1 }, status: 'Refill in process · VA expects to fill 09 OCT 2026 · 2 refills left' },
+      { match: 'furosemide', set: { kind: 'maint', sig: '1 tab PO BID before meals', dosesPerDay: 2, slots: ['am', 'pm'], refills: 2, daysSupply: 90, indication: 'Edema' }, strip: /\s*Doses\/day = 2 as budgeted[^.]*\./, status: 'Refill in process · VA expects to fill 09 OCT 2026 · 2 refills left' },
+      { match: 'sacubitril', set: { refills: 0, sig: '1 tab PO BID', dosesPerDay: 2 }, status: 'Refill in process · VA expects to fill 09 OCT 2026 · last refill (0 left after this)' },
+      { match: 'ivabradine', set: { refills: 0 }, status: 'Not on VA active list — RENEWAL NEEDED' }
+    ]
+  }; }
+  applyVA(d) {
+    const VA = this.VA;
+    if (!d || !d.meds || d.vaSync === VA.id) return d;
+    const today = this.iso(this.tmid()), tag = 'VA 27 SEP 2026: ';
+    for (const v of VA.meds) {
+      const m = d.meds.find(x => String(x.generic || '').toLowerCase().startsWith(v.match));
+      if (!m) continue;
+      Object.assign(m, JSON.parse(JSON.stringify(v.set)));
+      let n = String(m.notes || '');
+      if (v.strip) n = n.replace(v.strip, '');
+      m.notes = tag + v.status + '.' + (n.trim() ? '\n' + n.trim() : '');
+      m.history = [{ date: today, event: 'VA update — ' + v.status }].concat(m.history || []);
+    }
+    d.vaSync = VA.id;
     return d;
   }
 
