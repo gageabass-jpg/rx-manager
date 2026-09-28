@@ -237,6 +237,9 @@ video{display:block}
   <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}">
     <div style="padding:12px 20px;background:#b42318;color:#fff;font:600 13px 'IBM Plex Mono',monospace">{{err}}</div>
   </sc-if>
+  <sc-if value="{{hasMerge}}" hint-placeholder-val="{{ false }}">
+    <div style="padding:12px 20px;background:#166534;color:#fff;font:600 13px 'IBM Plex Mono',monospace;line-height:1.5">{{mergeMsg}}</div>
+  </sc-if>
   <div style="padding:0 0 24px 0;max-width:820px">
     <div style="background:#334552;color:#fff;padding:7px 20px;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:2px;margin:14px 0 12px 0">IDENTITY</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;padding:0 20px">
@@ -727,7 +730,31 @@ class Component extends DCLogic {
     if (v('discard')) form.notes = 'Discard after ' + v('discard') + '.';
     const sg = form.sig.toUpperCase();
     form.dosesPerDay = /BID/.test(sg) ? '2' : /TID/.test(sg) ? '3' : /QID/.test(sg) ? '4' : '1';
-    this.go('form', { form, editId: null });
+
+    // Does this bottle match a medication already stored? Match on Rx number
+    // first (most reliable), then fall back to generic name + strength.
+    const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const rxN = norm(form.rx), genN = norm(form.generic), strN = norm(form.strength);
+    const meds = this.state.data.meds || [];
+    let match = rxN ? meds.find(m => norm(m.rx) && norm(m.rx) === rxN) : null;
+    if (!match && genN) match = meds.find(m => norm(m.generic) === genN && (!strN || norm(m.strength) === strN));
+
+    if (match) {
+      // Add the scanned bottle's quantity to the existing med's on-hand supply,
+      // and reset the fill date to today so the countdown starts from the new total.
+      const addQty = Math.max(0, Math.round(this.num(form.qty, 0)));
+      const remaining = Math.max(0, Math.round(this.calc(match).remaining));
+      const newQty = remaining + addQty;
+      const mForm = this.med2form(match);
+      mForm.qty = String(newQty);
+      mForm.filled = this.iso(this.tmid());
+      if (this.num(form.refills, -1) >= 0) mForm.refills = String(Math.max(0, Math.floor(this.num(form.refills, 0))));
+      const label = (match.generic || '') + (match.strength ? ' ' + match.strength : '');
+      const merge = { drug: label, add: addQty, prev: remaining, now: newQty };
+      this.go('form', { form: mForm, editId: match.id, merge });
+      return;
+    }
+    this.go('form', { form, editId: null, merge: null });
   }
 
   markRefilled(id) {
@@ -770,10 +797,17 @@ class Component extends DCLogic {
       prescriber: f.prescriber.trim(), pharmacy: f.pharmacy.trim(), rx: f.rx.trim(), schedule: f.schedule, fulfil: f.fulfil, cold: !!f.cold, status: f.status, notes: f.notes
     };
     let id = this.state.editId;
-    if (id) { const old = d.meds.find(x => x.id === id); Object.assign(old, med); }
+    if (id) {
+      const old = d.meds.find(x => x.id === id);
+      if (old) {
+        const mg = this.state.merge;
+        if (mg) old.history = [{ date: med.filled, event: 'Added bottle — qty +' + mg.add + ' (now ' + qty + ')' }].concat(old.history || []);
+        Object.assign(old, med);
+      }
+    }
     else { id = 'm' + Date.now(); d.meds.push(Object.assign({ id, history: [{ date: f.filled, event: 'Filled — qty ' + qty }] }, med)); }
     this.persist(d);
-    this.go('detail', { activeId: id, form: null, editId: null });
+    this.go('detail', { activeId: id, form: null, editId: null, merge: null });
   }
 
   seg(on) { return "flex:1;min-height:52px;padding:8px 2px;border-radius:0;border:2px solid #16232e;margin-left:-2px;cursor:pointer;font:600 13px 'IBM Plex Mono',monospace;letter-spacing:.5px;background:" + (on ? '#16232e' : '#fff') + ';color:' + (on ? '#fff' : '#16232e'); }
@@ -976,9 +1010,10 @@ class Component extends DCLogic {
       f, fs, segKind, segFulfil, segSched, segStatus,
       coldStyle: this.seg(!!f.cold) + ';flex:none;padding:8px 20px', coldLabel: f.cold ? 'COLD CHAIN — YES' : 'COLD CHAIN — NO',
       onCold: () => this.setF('cold', !f.cold),
-      formTitle: st.editId ? 'EDIT — ' + (f.generic || '').toUpperCase() : 'ADD MEDICATION',
+      formTitle: st.merge ? 'ADD BOTTLE — ' + (f.generic || '').toUpperCase() : st.editId ? 'EDIT — ' + (f.generic || '').toUpperCase() : 'ADD MEDICATION',
       hasErr: !!st.err, err: st.err,
-      onSave: () => this.saveForm(), onCancel: () => this.go(st.editId ? 'detail' : 'dash', { form: null, editId: null }),
+      hasMerge: !!st.merge, mergeMsg: st.merge ? ('Matched ' + String(st.merge.drug).toUpperCase() + ' already in your list — added ' + st.merge.add + ' to inventory (' + st.merge.prev + ' → ' + st.merge.now + '). Review and Save to update it, or Cancel.') : '',
+      onSave: () => this.saveForm(), onCancel: () => this.go(st.editId ? 'detail' : 'dash', { form: null, editId: null, merge: null }),
       setRows,
       vCapture: st.view === 'capture',
       goCapture: () => { this.go('capture'); this.initCam(); },
