@@ -1,0 +1,28 @@
+name: RxManager
+options:
+  bundleIdPrefix: us.rxmanager
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+targets:
+  RxManager:
+    type: application
+    platform: iOS
+    sources:
+      - path: RxManager
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: us.rxmanager.app
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: "Rx Manager"
+        INFOPLIST_KEY_NSCameraUsageDescription: "Rx Manager uses the camera to scan medication labels on your device. Nothing leaves your phone."
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
+        TARGETED_DEVICE_FAMILY: "1,2"
