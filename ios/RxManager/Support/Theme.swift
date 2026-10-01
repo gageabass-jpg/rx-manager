@@ -10,27 +10,45 @@ extension Color {
     }
 }
 
-/// Rx Manager palette, carried over from the web app.
-enum RxColor {
-    static let ink = Color(hex: 0x16232e)
-    static let accent = Color(hex: 0x0e7490)
-    static let paper = Color(hex: 0xeef1f3)
-    static let card = Color.white
-    static let muted = Color(hex: 0x5c6b75)
-    static let line = Color(hex: 0xc3cbd1)
+/// "Calm" design direction — light, rounded, friendly consumer-health look.
+enum RxTheme {
+    static let bg     = Color(hex: 0xf2f5f2)   // soft sage-tinted page
+    static let card   = Color.white
+    static let ink    = Color(hex: 0x26312c)   // deep green-gray text
+    static let muted  = Color(hex: 0x7d8a82)
+    static let accent = Color(hex: 0x2f9e8f)   // sage teal
+    static let line   = Color(hex: 0xe6ebe6)
 
-    static let red = Color(hex: 0xb42318)
-    static let amber = Color(hex: 0xb54708)
-    static let indigo = Color(hex: 0x3538cd)
-    static let ok = Color(hex: 0x17242e)
+    static let cardRadius: CGFloat = 18
+    static let cardShadow = Color(hex: 0x26312c).opacity(0.08)
 
-    /// Color for a supply-urgency rank (matches calc() tiers).
-    static func rank(_ r: Int) -> Color {
-        switch r {
-        case 5, 4: return red
-        case 3, 1: return indigo
-        case 2:    return amber
-        default:   return ok
+    /// Visual style for a supply-urgency rank (0 ok … 5 out).
+    struct Status {
+        var fg: Color
+        var tint: Color
+        var label: String?
+    }
+
+    static func status(rank: Int, renewal: Bool) -> Status {
+        switch rank {
+        case 5: return Status(fg: Color(hex: 0xb42318), tint: Color(hex: 0xfbeae8), label: "Out")
+        case 4: return Status(fg: Color(hex: 0xb42318), tint: Color(hex: 0xfbeae8), label: renewal ? "Overdue · renew" : "Overdue")
+        case 3: return Status(fg: Color(hex: 0x534ab7), tint: Color(hex: 0xececfb), label: "Renewal soon")
+        case 2: return Status(fg: Color(hex: 0xb54708), tint: Color(hex: 0xfbeadd), label: "Order now")
+        case 1: return Status(fg: Color(hex: 0x534ab7), tint: Color(hex: 0xececfb), label: "0 refills")
+        default: return Status(fg: Color(hex: 0x1d9e75), tint: Color(hex: 0xe3f3ee), label: nil)
+        }
+    }
+
+    /// Friendly dosing phrase from doses-per-day.
+    static func frequency(_ dpd: Double) -> String {
+        switch Int(dpd.rounded()) {
+        case ..<1: return "as needed"
+        case 1: return "once daily"
+        case 2: return "twice daily"
+        case 3: return "three times daily"
+        case 4: return "four times daily"
+        default: return "\(Int(dpd.rounded()))× daily"
         }
     }
 }

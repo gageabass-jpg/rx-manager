@@ -9,99 +9,99 @@ struct MedListView: View {
         }
     }
 
-    private var todayLabel: String {
-        let f = DateFormatter()
-        f.dateFormat = "dd MMM yyyy"
-        return f.string(from: Date()).uppercased()
+    private var greeting: String {
+        let h = Calendar.current.component(.hour, from: Date())
+        switch h {
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        default: return "Good evening"
+        }
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(sortedMeds) { med in
-                        MedRow(med: med, metrics: store.metrics(for: med))
-                        Divider().overlay(RxColor.line)
-                    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 13) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(greeting)
+                        .font(.system(size: 13))
+                        .foregroundStyle(RxTheme.muted)
+                    Text("Your medications")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundStyle(RxTheme.ink)
                 }
-                .background(RxColor.card)
-            }
-            .background(RxColor.paper)
-            .navigationTitle("Rx Manager")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(RxColor.ink, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .safeAreaInset(edge: .top, spacing: 0) { summaryBar }
-        }
-    }
+                .padding(.top, 10)
+                .padding(.bottom, 2)
 
-    private var summaryBar: some View {
-        HStack(spacing: 10) {
-            Text(todayLabel)
-            Text("·")
-            Text("\(store.activeMeds.count) ACTIVE")
-            Text("·")
-            Text("\(store.needActionCount) NEED ACTION")
-                .foregroundStyle(store.needActionCount > 0 ? RxColor.red : .white.opacity(0.7))
-            Spacer()
+                if store.needActionCount > 0 {
+                    Text("\(store.needActionCount) need\(store.needActionCount == 1 ? "s" : "") attention")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color(hex: 0xb54708))
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(hex: 0xfbeadd), in: RoundedRectangle(cornerRadius: 12))
+                }
+
+                ForEach(sortedMeds) { med in
+                    MedCard(med: med, metrics: store.metrics(for: med))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 28)
         }
-        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-        .foregroundStyle(.white.opacity(0.82))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 11)
-        .frame(maxWidth: .infinity)
-        .background(RxColor.ink)
+        .background(RxTheme.bg)
+        .scrollIndicators(.hidden)
     }
 }
 
-struct MedRow: View {
+struct MedCard: View {
     let med: Medication
     let metrics: MedMetrics
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+        let s = RxTheme.status(rank: metrics.rank, renewal: metrics.renewal)
+        HStack(spacing: 13) {
+            ZStack {
+                Circle().fill(s.tint)
+                VStack(spacing: -1) {
+                    Text("\(metrics.daysOnHand)")
+                        .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    Text("days")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(s.fg)
+            }
+            .frame(width: 52, height: 52)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(med.generic)
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundStyle(RxColor.ink)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(RxTheme.ink)
                     if !med.brand.isEmpty {
-                        Text("(\(med.brand))")
-                            .font(.system(size: 17))
-                            .foregroundStyle(RxColor.muted)
+                        Text(med.brand)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(RxTheme.muted)
                     }
                 }
-                Text("\(med.strength) · \(med.sig)")
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(RxColor.ink.opacity(0.85))
-                if !med.drugClass.isEmpty {
-                    Text(med.drugClass.uppercased())
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(RxColor.muted)
-                        .lineLimit(1)
-                }
-                if !metrics.tag.isEmpty {
-                    Text(metrics.tag)
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 7).padding(.vertical, 3)
-                        .background(RxColor.rank(metrics.rank), in: Capsule())
+                Text("\(med.strength) · \(RxTheme.frequency(med.dosesPerDay))")
+                    .font(.system(size: 12))
+                    .foregroundStyle(RxTheme.muted)
+                if let label = s.label {
+                    Text(label)
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(s.fg)
+                        .padding(.horizontal, 8).padding(.vertical, 2)
+                        .background(s.tint, in: Capsule())
                         .padding(.top, 2)
                 }
             }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 0) {
-                Text("\(metrics.daysOnHand)")
-                    .font(.system(size: 34, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(metrics.needsAction ? RxColor.rank(metrics.rank) : RxColor.ink)
-                Text("DAYS")
-                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(RxColor.muted)
-            }
+            Spacer(minLength: 4)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(RxTheme.muted.opacity(0.5))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(RxColor.card)
+        .padding(14)
+        .background(RxTheme.card, in: RoundedRectangle(cornerRadius: RxTheme.cardRadius))
+        .shadow(color: RxTheme.cardShadow, radius: 10, y: 5)
     }
 }

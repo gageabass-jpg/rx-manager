@@ -6,8 +6,9 @@ struct RxManagerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MedListView()
+            RootTabView()
                 .environment(store)
+                .preferredColorScheme(.light)
         }
     }
 }
