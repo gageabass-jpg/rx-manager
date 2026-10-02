@@ -21,29 +21,28 @@ struct GooeyInput: View {
     private let gap: CGFloat = 12
     private let blur: CGFloat = 7
 
-    private let surface = RxTheme.ink
-    private let onSurface = Color.white
+    private let content = RxTheme.ink
 
     var body: some View {
         GeometryReader { geo in
             let g = layout(width: geo.size.width)
 
             ZStack(alignment: .topLeading) {
-                // Gooey surface — the two blobs merged through blur + threshold.
-                Canvas { ctx, _ in
-                    ctx.addFilter(.alphaThreshold(min: 0.45, color: surface))
-                    ctx.addFilter(.blur(radius: blur))
-                    ctx.drawLayer { layer in
-                        layer.fill(Capsule().path(in: g.bar), with: .color(.black))
-                        layer.fill(Circle().path(in: g.circle), with: .color(.black))
-                    }
-                }
-                .allowsHitTesting(false)
+                // Frosted-glass surface: a real material + sage tint + top sheen,
+                // clipped to the merged metaball silhouette used as a mask.
+                glassSurface
+                    .mask { metaballMask(g) }
+                    .shadow(color: RxTheme.ink.opacity(0.14), radius: 7, y: 3)
+                    .allowsHitTesting(false)
+
+                // Glass rim — a bright top edge fading down, in as it expands.
+                rim(g)
+                    .allowsHitTesting(false)
 
                 // Magnifier — rides the circle from pill-left to the detached bubble.
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(onSurface)
+                    .foregroundStyle(content)
                     .frame(width: g.circle.width, height: g.circle.height)
                     .position(x: g.circle.midX, y: g.circle.midY)
                     .allowsHitTesting(false)
@@ -51,7 +50,7 @@ struct GooeyInput: View {
                 // Collapsed label.
                 Text(placeholder)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(onSurface.opacity(0.9))
+                    .foregroundStyle(content.opacity(0.85))
                     .lineLimit(1)
                     .frame(width: max(0, g.bar.width - height), alignment: .leading)
                     .position(x: g.bar.minX + height / 2 + (g.bar.width - height) / 2,
@@ -63,12 +62,12 @@ struct GooeyInput: View {
                 ZStack(alignment: .leading) {
                     if text.isEmpty {
                         Text(expandedPlaceholder)
-                            .foregroundStyle(onSurface.opacity(0.5))
+                            .foregroundStyle(content.opacity(0.4))
                     }
                     TextField("", text: $text)
                         .focused($focused)
-                        .foregroundStyle(onSurface)
-                        .tint(onSurface)
+                        .foregroundStyle(content)
+                        .tint(RxTheme.accent)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .submitLabel(.search)
@@ -78,7 +77,7 @@ struct GooeyInput: View {
                     if !text.isEmpty {
                         Button { text = "" } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(onSurface.opacity(0.55))
+                                .foregroundStyle(content.opacity(0.4))
                         }
                     }
                 }
@@ -107,6 +106,45 @@ struct GooeyInput: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { open() }
             }
         }
+    }
+
+    // MARK: Glass
+
+    private var glassSurface: some View {
+        ZStack {
+            Rectangle().fill(.ultraThinMaterial)
+            Rectangle().fill(RxTheme.accent.opacity(0.12))
+            LinearGradient(colors: [.white.opacity(0.45), .white.opacity(0.0)],
+                           startPoint: .top, endPoint: .center)
+        }
+        .compositingGroup()
+    }
+
+    /// White metaball silhouette (blobs merged by blur + alpha threshold),
+    /// used as the alpha mask for the glass surface.
+    private func metaballMask(_ g: (circle: CGRect, bar: CGRect)) -> some View {
+        Canvas { ctx, _ in
+            ctx.addFilter(.alphaThreshold(min: 0.45, color: .white))
+            ctx.addFilter(.blur(radius: blur))
+            ctx.drawLayer { layer in
+                layer.fill(Capsule().path(in: g.bar), with: .color(.black))
+                layer.fill(Circle().path(in: g.circle), with: .color(.black))
+            }
+        }
+    }
+
+    private func rim(_ g: (circle: CGRect, bar: CGRect)) -> some View {
+        let grad = LinearGradient(colors: [.white.opacity(0.7), .white.opacity(0.12)],
+                                  startPoint: .top, endPoint: .bottom)
+        return ZStack(alignment: .topLeading) {
+            Capsule().strokeBorder(grad, lineWidth: 1)
+                .frame(width: g.bar.width, height: g.bar.height)
+                .position(x: g.bar.midX, y: g.bar.midY)
+            Circle().strokeBorder(grad, lineWidth: 1)
+                .frame(width: g.circle.width, height: g.circle.height)
+                .position(x: g.circle.midX, y: g.circle.midY)
+        }
+        .opacity(Double(p))
     }
 
     // MARK: Interaction

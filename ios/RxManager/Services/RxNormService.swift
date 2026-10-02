@@ -20,6 +20,8 @@ struct DrugHit: Identifiable, Hashable {
 enum RxNormService {
     private static let base = "https://rxnav.nlm.nih.gov/REST"
 
+    struct ServiceError: Error {}
+
     // MARK: Search
 
     static func search(_ term: String) async throws -> [DrugHit] {
@@ -30,7 +32,9 @@ enum RxNormService {
         comps.queryItems = [URLQueryItem(name: "name", value: q)]
 
         let (data, resp) = try await URLSession.shared.data(from: comps.url!)
-        guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        // Treat any non-200 (rate limit, transient 5xx) as a reachability error
+        // so the UI offers a retry rather than a misleading "no matches".
+        guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw ServiceError() }
 
         let decoded = try JSONDecoder().decode(DrugsResponse.self, from: data)
         let groups = decoded.drugGroup.conceptGroup ?? []
