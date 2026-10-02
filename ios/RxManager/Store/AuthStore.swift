@@ -71,6 +71,22 @@ final class AuthStore {
         }
     }
 
+    /// A usable access token, refreshing first if it's expired or about to be.
+    @MainActor
+    func validAccessToken() async -> String? {
+        guard let s = session else { return nil }
+        if s.expiresAt.timeIntervalSinceNow > 60 { return s.accessToken }
+        do {
+            var refreshed = try await SupabaseAuth.refresh(refreshToken: s.refreshToken)
+            if (refreshed.user.name ?? "").isEmpty { refreshed.user.name = s.user.name }
+            session = refreshed
+            Keychain.saveSession(refreshed)
+            return refreshed.accessToken
+        } catch {
+            return s.accessToken   // let the caller surface a 401 if it's truly dead
+        }
+    }
+
     func signOut() {
         session = nil
         currentNonce = nil

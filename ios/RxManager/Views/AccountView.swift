@@ -3,6 +3,7 @@ import AuthenticationServices
 
 struct AccountView: View {
     @Environment(AuthStore.self) private var auth
+    @Environment(SyncService.self) private var sync
 
     var body: some View {
         ScrollView {
@@ -115,10 +116,26 @@ struct AccountView: View {
             .padding(.top, 36)
 
             card {
-                row("Sync", "Coming soon")
+                HStack {
+                    Text("Sync").font(.system(size: 14)).foregroundStyle(RxTheme.muted)
+                    Spacer()
+                    syncStatusLabel
+                }
                 divider
                 row("Reminders", "Set up in Settings")
             }
+
+            Button {
+                Task { await sync.syncNow() }
+            } label: {
+                Text("Sync now")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(RxTheme.card, in: RoundedRectangle(cornerRadius: 14))
+                    .foregroundStyle(RxTheme.accent)
+            }
+            .disabled(sync.status == .syncing)
 
             Button(role: .destructive) { auth.signOut() } label: {
                 Text("Sign out")
@@ -153,6 +170,30 @@ struct AccountView: View {
             Text(value)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundStyle(RxTheme.ink)
+        }
+    }
+
+    @ViewBuilder
+    private var syncStatusLabel: some View {
+        switch sync.status {
+        case .syncing:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Syncing…").font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(RxTheme.muted)
+            }
+        case .synced(let at):
+            Text("Synced \(at.formatted(date: .omitted, time: .shortened))")
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color(hex: 0x1d9e75))
+        case .error(let msg):
+            Text(msg)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color(hex: 0xb42318))
+                .multilineTextAlignment(.trailing)
+        case .signedOut:
+            Text("—").font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(RxTheme.muted)
         }
     }
 

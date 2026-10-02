@@ -26,6 +26,11 @@ enum SupabaseAuth {
                          body: ["provider": "apple", "id_token": idToken, "nonce": nonce])
     }
 
+    /// Exchange a refresh token for a fresh session.
+    static func refresh(refreshToken: String) async throws -> AuthSession {
+        try await token(grant: "refresh_token", body: ["refresh_token": refreshToken])
+    }
+
     // MARK: Core request
 
     private static func token(grant: String, body: [String: Any]) async throws -> AuthSession {

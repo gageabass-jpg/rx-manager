@@ -16,6 +16,11 @@ struct MedMetrics {
 final class MedStore {
     var meds: [Medication] = []
     var settings = AppSettings()
+    /// When the local data last changed — drives last-write-wins sync.
+    private(set) var updatedAt: Date = Date()
+
+    /// Called after a local mutation so the sync layer can push. Not persisted.
+    @ObservationIgnored var onChange: (() -> Void)?
 
     private static let day: TimeInterval = 86_400
 
@@ -28,13 +33,18 @@ final class MedStore {
 
     // MARK: Persistence
 
-    private struct PersistState: Codable { var meds: [Medication]; var settings: AppSettings }
+    private struct PersistState: Codable {
+        var meds: [Medication]
+        var settings: AppSettings
+        var updatedAt: Date?
+    }
 
     func load() {
         if let data = try? Data(contentsOf: fileURL),
            let state = try? JSONDecoder().decode(PersistState.self, from: data) {
             meds = state.meds
             settings = state.settings
+            updatedAt = state.updatedAt ?? Date()
         } else {
             meds = MedStore.seed()
             save()
@@ -42,10 +52,25 @@ final class MedStore {
     }
 
     func save() {
-        let state = PersistState(meds: meds, settings: settings)
+        let state = PersistState(meds: meds, settings: settings, updatedAt: updatedAt)
         if let data = try? JSONEncoder().encode(state) {
             try? data.write(to: fileURL, options: .atomic)
         }
+    }
+
+    /// Record a local change: bump the timestamp, persist, and notify the sync layer.
+    private func touch() {
+        updatedAt = Date()
+        save()
+        onChange?()
+    }
+
+    /// Replace local data with a remote snapshot without marking it dirty (no push-back).
+    func adopt(meds: [Medication], settings: AppSettings, updatedAt: Date) {
+        self.meds = meds
+        self.settings = settings
+        self.updatedAt = updatedAt
+        save()
     }
 
     // MARK: Derived data
@@ -109,7 +134,7 @@ final class MedStore {
             m.history.insert(HistoryEntry(date: m.filled, event: "Added — qty \(Int(m.qty))"), at: 0)
             meds.append(m)
         }
-        save()
+        touch()
     }
 
     /// Record a refill: reset the fill date to today and decrement refills.
@@ -121,7 +146,7 @@ final class MedStore {
             HistoryEntry(date: meds[i].filled,
                          event: "Filled — qty \(Int(meds[i].qty)) · \(meds[i].refills) refills left"),
             at: 0)
-        save()
+        touch()
     }
 
     func setActive(_ id: String, _ active: Bool) {
@@ -130,12 +155,12 @@ final class MedStore {
         meds[i].history.insert(
             HistoryEntry(date: MedStore.todayString(), event: "Status → \(active ? "ACTIVE" : "INACTIVE")"),
             at: 0)
-        save()
+        touch()
     }
 
     func delete(_ id: String) {
         meds.removeAll { $0.id == id }
-        save()
+        touch()
     }
 
     // MARK: Seed
