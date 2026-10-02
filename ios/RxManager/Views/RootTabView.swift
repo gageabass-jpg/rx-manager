@@ -5,18 +5,6 @@ struct RootTabView: View {
         TabView {
             NavigationStack {
                 MedListView()
-                    .navigationTitle("Rx Manager")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button {
-                            } label: {
-                                Image(systemName: "plus")
-                                    .fontWeight(.semibold)
-                            }
-                            .tint(RxTheme.accent)
-                        }
-                    }
             }
             .tabItem { Label("Meds", systemImage: "pills") }
 

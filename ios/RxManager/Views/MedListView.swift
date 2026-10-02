@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MedListView: View {
     @Environment(MedStore.self) private var store
+    @State private var adding = false
 
     private var sortedMeds: [Medication] {
         store.activeMeds.sorted {
@@ -42,7 +43,10 @@ struct MedListView: View {
                 }
 
                 ForEach(sortedMeds) { med in
-                    MedCard(med: med, metrics: store.metrics(for: med))
+                    NavigationLink(value: med.id) {
+                        MedCard(med: med, metrics: store.metrics(for: med))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16)
@@ -50,6 +54,22 @@ struct MedListView: View {
         }
         .background(RxTheme.bg)
         .scrollIndicators(.hidden)
+        .navigationTitle("Rx Manager")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: String.self) { id in
+            MedDetailView(medID: id)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { adding = true } label: {
+                    Image(systemName: "plus").fontWeight(.semibold)
+                }
+                .tint(RxTheme.accent)
+            }
+        }
+        .sheet(isPresented: $adding) {
+            MedFormView(mode: .add).environment(store)
+        }
     }
 }
 

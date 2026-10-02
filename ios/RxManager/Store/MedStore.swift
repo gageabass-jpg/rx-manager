@@ -87,11 +87,55 @@ final class MedStore {
         return f.date(from: s)
     }
 
-    static func todayString() -> String {
+    static func todayString() -> String { dateString(Date()) }
+
+    static func dateString(_ d: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         f.locale = Locale(identifier: "en_US_POSIX")
-        return f.string(from: Date())
+        return f.string(from: d)
+    }
+
+    func med(id: String) -> Medication? { meds.first { $0.id == id } }
+
+    // MARK: Mutations
+
+    /// Add a new medication or replace an existing one (matched by id).
+    func upsert(_ med: Medication) {
+        if let i = meds.firstIndex(where: { $0.id == med.id }) {
+            meds[i] = med
+        } else {
+            var m = med
+            m.history.insert(HistoryEntry(date: m.filled, event: "Added — qty \(Int(m.qty))"), at: 0)
+            meds.append(m)
+        }
+        save()
+    }
+
+    /// Record a refill: reset the fill date to today and decrement refills.
+    func markRefilled(_ id: String) {
+        guard let i = meds.firstIndex(where: { $0.id == id }) else { return }
+        meds[i].filled = MedStore.todayString()
+        meds[i].refills = max(0, meds[i].refills - 1)
+        meds[i].history.insert(
+            HistoryEntry(date: meds[i].filled,
+                         event: "Filled — qty \(Int(meds[i].qty)) · \(meds[i].refills) refills left"),
+            at: 0)
+        save()
+    }
+
+    func setActive(_ id: String, _ active: Bool) {
+        guard let i = meds.firstIndex(where: { $0.id == id }) else { return }
+        meds[i].status = active ? "active" : "inactive"
+        meds[i].history.insert(
+            HistoryEntry(date: MedStore.todayString(), event: "Status → \(active ? "ACTIVE" : "INACTIVE")"),
+            at: 0)
+        save()
+    }
+
+    func delete(_ id: String) {
+        meds.removeAll { $0.id == id }
+        save()
     }
 
     // MARK: Seed
