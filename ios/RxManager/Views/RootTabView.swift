@@ -17,9 +17,7 @@ struct RootTabView: View {
             .tabItem { Label("Scan", systemImage: "camera.viewfinder") }
 
             NavigationStack {
-                ComingSoonView(icon: "person.crop.circle",
-                               title: "Your account",
-                               note: "Sign in to sync your medications across devices and manage text reminders.")
+                AccountView()
                     .navigationTitle("Account")
             }
             .tabItem { Label("Account", systemImage: "person.crop.circle") }
