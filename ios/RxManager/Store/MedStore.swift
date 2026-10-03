@@ -163,6 +163,11 @@ final class MedStore {
         touch()
     }
 
+    func updateSettings(_ newSettings: AppSettings) {
+        settings = newSettings
+        touch()
+    }
+
     // MARK: Seed
 
     static func seed() -> [Medication] {

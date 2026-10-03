@@ -122,7 +122,7 @@ struct AccountView: View {
                     syncStatusLabel
                 }
                 divider
-                row("Reminders", "Set up in Settings")
+                row("Reminders", "Coming soon")
             }
 
             Button {

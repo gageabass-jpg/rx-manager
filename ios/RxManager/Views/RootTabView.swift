@@ -23,9 +23,7 @@ struct RootTabView: View {
             .tabItem { Label("Account", systemImage: "person.crop.circle") }
 
             NavigationStack {
-                ComingSoonView(icon: "gearshape",
-                               title: "Settings",
-                               note: "Reminder lead times and preferences.")
+                SettingsView()
                     .navigationTitle("Settings")
             }
             .tabItem { Label("Settings", systemImage: "gearshape") }
